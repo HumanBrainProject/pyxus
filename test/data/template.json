@@ -1,0 +1,11 @@
+{
+  "@id" : "{endpoint}/schemas/{org}/{domain}/{schema_name}/{version}/",
+  "@type":"owl:Ontology",
+  "shapes" : [{
+        "@id" : "schemashapes:{shapeName}",
+        "@type":"sh:Shape"
+  },{
+        "@id" : "schemashapes:{anotherShapeName}",
+        "@type":"sh:Shape"
+  }]
+}

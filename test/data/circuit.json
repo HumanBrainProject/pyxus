@@ -1,0 +1,8 @@
+{
+  "@id" : "{endpoint}/schemas/bbp/core/entity/v1.0.0/",
+  "shapes" : [ {
+    "@id" : "{endpoint}/schemas/bbp/core/entity/v1.0.0/shapes/Circuit_1_2",
+    "@type" : "sh:Node Shape",
+    "targetNode" : ["bbp:Circuit_1","bbp:Circuit_2"]
+  } ]
+}
