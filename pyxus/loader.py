@@ -64,9 +64,9 @@ def load_instance(data_file = None, data_str = None):
     NOTE: only one of data_file or data_str should be specified
     """
     if data_file is not None and data_str is not None:
-        raise ValueException('At most one of data_file or data_str can be specified')
+        raise ValueError('At most one of data_file or data_str can be specified')
     if data_file is None and data_str is None:
-        raise ValueException('At least one of data_file or data_str must be specified')
+        raise ValueError('At least one of data_file or data_str must be specified')
 
     j = None
     if data_file is not None:
@@ -75,7 +75,7 @@ def load_instance(data_file = None, data_str = None):
         elif isinstance(data_file, str):
             j = json.load(open(data_file))
         else:
-            raise ValueException('data_file must be of type file or string.')
+            raise ValueError('data_file must be of type file or string.')
     else:
         j = json.loads(data_str)
 
@@ -95,7 +95,7 @@ def get_instance(resultId = None, searchResult = None):
 
     # if resultId and searchResult?
     if not(bool(resultId is None) ^ bool(searchResult is None)) :
-        raise ValueException('only one of resultId and searchResult arguments can be specified')
+        raise ValueError('only one of resultId and searchResult arguments can be specified')
 
     if searchResult is not None:
         resultId = searchResult.resultId
