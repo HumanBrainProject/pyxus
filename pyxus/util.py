@@ -5,31 +5,14 @@
 #from rdflib import Graph, plugin
 #from rdflib.serializer import Serializer
 
+DEFAULT_SCHEME = "http"
+DEFAULT_HOST = "localhost:8080"
+DEFAULT_PREFIX = "v0"
+DEFAULT_API_ROOT = "{}://{}/{}".format(DEFAULT_SCHEME, DEFAULT_HOST, DEFAULT_PREFIX)
+DEFAULT_API_ROOT_DICT = {
+    'scheme' : DEFAULT_SCHEME,
+    'host' : DEFAULT_HOST,
+    'prefix' : DEFAULT_PREFIX
+}
 
-from rdflib.plugin import register, Parser, Serializer
-register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
-register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
-
-from rdflib import Graph, Literal, URIRef
-from rdflib.namespace import RDF
-
-def load_jsonld(source):
-    return Graph().parse(source=source, format='json-ld')
-
-def load_ttl(source):
-    return Graph().parse(source=source, format='turtle')
-
-def pretty_jsonld(g, context=None):
-    if context:
-        return g.serialize(format='json-ld', indent=4, context=context)
-    else:
-        return g.serialize(format='json-ld', indent=4)
-
-#This is a WIP, needs to be recursive across triples
-def to_dict(g):
-    l = g.triples((None,RDF.type,None))
-    ll = list(l)
-    root_types = []
-    for (s,p,o) in ll:
-        if len(list(g.subjects((None,None,None))):
-               root_types += s
+JSON_CONTENT = { "Content-type" : "application/json" }
