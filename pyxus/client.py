@@ -9,12 +9,12 @@ JSON_CONTENT = { "Content-type" : "application/json" }
 
 class NexusClient:
 
-    def __init__(self,
-                 scheme: str='http',
-                 host: str='localhost:8080',
-                 prefix: str='v0'
-                 ):
-        self.api_root = f'{scheme}://{host}/{prefix}'
+    def __init__(self, scheme='http', host='localhost:8080', prefix='v0'):
+        self.api_root = '{scheme}://{host}/{prefix}'.format(
+            scheme=scheme,
+            host=host,
+            prefix=prefix,
+        )
         self.api_root_dict = {
             'scheme': scheme,
             'host': host,
@@ -25,14 +25,13 @@ class NexusClient:
     def content_mimetype(self):
         return JSON_CONTENT
 
-    def _do_request(self,
-                    method_name: str,
-                    endpoint_url: str,
-                    data: Union[str, dict],
-                    ):
+    def _do_request(self, method_name, endpoint_url, data):
         LOGGER.debug('%s %s\n%r', method_name, endpoint_url, data)
         method = getattr(requests, method_name)
-        full_url = f'{self.api_root}{endpoint_url}'
+        full_url = '{api_root}{endpoint_url}'.format(
+            api_root=self.api_root,
+            endpoint_url=endpoint_url
+        )
         if isinstance(data, dict):
             data = json.dumps(data)
         headers = JSON_CONTENT
