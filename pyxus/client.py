@@ -40,34 +40,46 @@ class NexusClient:
         LOGGER.debug('returned %s', response.status_code)
         return response
 
-    def _put(self, *args, **kwargs):
+    def put(self, *args, **kwargs):
         return self._do_request('put', *args, **kwargs)
 
-    def put_org(self, name: str, desc: str) -> requests.Response:
+    def get(self, *args, **kwargs):
+        return self._do_request('get', *args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        return self._do_request('post', *args, **kwargs)
+
+    def patch(self, *args, **kwargs):
+        return self._do_request('patch', *args, **kwargs)
+
+    def put_org(self, name, desc):
         obj = {
             'description': desc
         }
-        api = f'/organizations/{name}'
-        return self._put(api, obj)
+        api = '/organizations/{name}'.format(name=name)
+        return self.put(api, obj)
 
-    def put_domain(self, org: str, dom: str, desc: str) -> requests.Response:
+    def put_domain(self, org, dom, desc):
         obj = {
             'description': desc
         }
-        api = f'/organizations/{org}/domain/{dom}'
-        return self._put(api, obj)
+        api = '/organizations/{org}/domain/{dom}'.format(
+            org=org,
+            dom=dom
+        )
+        return self.put(api, obj)
 
-    def put_schema(self, name: str, content: str) -> bool:
-        api = f'/schemas{name}'
+    def put_schema(self, name, content):
+        api = '/schemas{name}'.format(name=name)
         # printing here just to reproduce master branch behavior, ideally log
-        print("uploading schema to {}".format(api))
-        response = self._put(api, content)
+        LOGGER.info("uploading schema to %s", api)
+        response = self.put(api, content)
         if response > 201:
-            print("Failure uploading schema to {}".format(api))
-            print("Code:{} ({}) - {}".format(
-                response.status_code, response.reason, response.text))
-            print("payload:")
-            print(content)
+            LOGGER.info("Failure uploading schema to %s", api)
+            LOGGER.info("Code:%s (%s) - %s",
+                response.status_code, response.reason, response.text)
+            LOGGER.info("payload:")
+            LOGGER.info(content)
             return False
         else:
             return True

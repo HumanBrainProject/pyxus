@@ -81,6 +81,7 @@ def load_instance(data_file = None, data_str = None):
 
     return j
 
+
 def get_instance(resultId = None, searchResult = None):
     """Create a new schema or revise an existing.
 
