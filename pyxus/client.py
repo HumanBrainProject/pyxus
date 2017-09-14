@@ -27,6 +27,7 @@ class HTTPMixin(object):
         return self._do_request('put', *args, **kwargs)
 
     def get(self, *args, **kwargs):
+        # return NexusPayload(response.content)?
         return self._do_request('get', *args, **kwargs)
 
     def post(self, *args, **kwargs):
