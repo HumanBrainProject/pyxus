@@ -5,12 +5,12 @@ import logging
 from pyxus.payload import NexusPayload, JSON_CONTENT
 
 
-LOGGER = logging.getLogger('pyxus.client')
+LOGGER = logging.getLogger(__name__)
 
 
 class HTTPMixin(object):
 
-    def _do_request(self, method_name, endpoint_url, data, headers=None):
+    def _do_request(self, method_name, endpoint_url, data=None, headers=None):
         LOGGER.debug('%s %s\n%r', method_name, endpoint_url, data)
         method = getattr(requests, method_name)
         full_url = '{api_root}{endpoint_url}'.format(
@@ -18,7 +18,8 @@ class HTTPMixin(object):
             endpoint_url=endpoint_url
         )
         headers = headers or {}
-        headers.update(self.content_mimetype)
+        headers.update(JSON_CONTENT)
+        LOGGER.debug('request:%s %s\n%r', method_name, full_url, data)
         response = method(full_url, str(data), headers=headers)
         LOGGER.debug('returned %s', response.status_code)
         return response
@@ -49,6 +50,10 @@ class OrgCRUD(object):
         api = '/organizations/{name}'.format(name=name)
         return self.put(api, obj)
 
+    def get_org(self, name):
+        api = '/organizations/{name}'.format(name=name)
+        return self.get(api)
+
 
 class DomainCRUD(object):
 
@@ -63,7 +68,7 @@ class DomainCRUD(object):
         return self.put(api, obj)
 
 
-class SchemeCRUD(object):
+class SchemaCRUD(object):
 
     def put_schema(self, name, content):
         api = '/schemas{name}'.format(name=name)
@@ -81,7 +86,7 @@ class SchemeCRUD(object):
             return True
 
 
-class CRUDMixin(OrgCRUD, DomainCRUD, SchemeCRUD):
+class CRUDMixin(OrgCRUD, DomainCRUD, SchemaCRUD):
     pass
 
 

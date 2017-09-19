@@ -1,0 +1,6 @@
+PyHamcrest==1.9.0
+mock==2.0.0
+mock-matchers==0.0.1
+sniffer==0.4.0
+HTTPretty==0.8.14
+green==2.11.0
