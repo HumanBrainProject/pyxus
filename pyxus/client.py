@@ -100,6 +100,10 @@ class OrgCRUD(object):
         api = '/organizations/{name}'.format(name=name)
         return self.get(api)
 
+    def list_orgs(self, name):
+        api = '/organizations/{name}'.format(name=name)
+        return self.get(api)
+
 
 class DomainCRUD(object):
 
@@ -112,6 +116,13 @@ class DomainCRUD(object):
             dom=dom
         )
         return self.put(api, obj)
+
+    def read_domain(self, org, dom):
+        api = '/organizations/{org}/domain/{dom}'.format(
+            org=org,
+            dom=dom
+        )
+        return self.get(api)
 
 
 class SchemaCRUD(object):

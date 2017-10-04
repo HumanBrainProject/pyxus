@@ -1,4 +1,6 @@
 
+JSON_CONTENT = { "Content-type" : "application/json" }
+
 
 
 NEXUS_ENV_LOCALHOST={'scheme': 'http',
