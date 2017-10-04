@@ -1,0 +1,46 @@
+{
+  "@context": {
+    "@vocab": "http://schema.org/",
+    "@base": "https://bbp-nexus.epfl.ch/data/bbp/contributing/organization/v1.0.0/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "prov": "http://www.w3.org/ns/prov#",
+    "Organization": "http://schema.org/Organization",
+    "PostalAddress": "http://schema.org/PostalAddress"
+  },
+  "@type": "Organization",
+  "@id": "5cb48794-1af3-4dcc-9271-540bc82361c2",
+  "name": "Blue Brain Project",
+  "address": {
+    "@type": "PostalAddress",
+    "@id": "5cb48794-1af8-4dec-9271-540bc82361c2",
+    "streetAddress": {
+      "@type": "xsd:string",
+      "@value": "Chemin des Mines 9"
+    },
+    "postalCode": {
+      "@type": "xsd:string",
+      "@value": "1202"
+    },
+    "addressLocality": {
+      "@type": "xsd:string",
+      "@value": "Campus Biotech, Geneva"
+    },
+    "addressCountry": {
+      "@type": "xsd:string",
+      "@value": "Switzerland"
+    },
+    "telephone": {
+      "@type": "xsd:string",
+      "@value": "+41 21 693 76 60"
+    }
+  },
+  "parentOrganization": {
+    "@type": "Organization",
+    "@id": "5cb48794-1af3-4dcc-921-540bc82361c2",
+    "name": "Ecole Polytechnique Fédérale de Lausanne",
+    "address": {
+      "@type": "xsd:string",
+      "@value": "Route Cantonale, 1015 Lausanne"
+    }
+  }
+}

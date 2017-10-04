@@ -1,15 +1,8 @@
 import unittest
-from rdflib.plugin import register, Parser, Serializer
-register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
-register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
-
-from rdflib import Graph, Literal, URIRef
 import glob
 import pyxus.util as u
 
 class TestJsonld(unittest.TestCase):
-
-
     def test_parse(self):
         print 'test_parse'
         for i in glob.glob('./data/*.json'):

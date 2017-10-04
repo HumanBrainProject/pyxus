@@ -54,55 +54,6 @@ def upload_schema(file_path, schema_path = None, client=DEFAULT_CLIENT):
     return client.put_schema(get_this_schema_name(schema_json), schema_str)
 
 
-def load_instance(data_file = None, data_str = None):
-    """Create a new schema or revise an existing.
-
-    Arguments:
-    Keyword arguments:
-    data_file -- path or file for the location of the .json instance in JSON-LD format.
-    data_str -- string data payload
-    NOTE: only one of data_file or data_str should be specified
-    """
-    if data_file is not None and data_str is not None:
-        raise ValueError('At most one of data_file or data_str can be specified')
-    if data_file is None and data_str is None:
-        raise ValueError('At least one of data_file or data_str must be specified')
-
-    j = None
-    if data_file is not None:
-        if isinstance(data_file, file):
-            j = json.load(data_file)
-        elif isinstance(data_file, str):
-            j = json.load(open(data_file))
-        else:
-            raise ValueError('data_file must be of type file or string.')
-    else:
-        j = json.loads(data_str)
-
-    return j
-
-
-def get_instance(resultId = None, searchResult = None):
-    """Create a new schema or revise an existing.
-
-    Arguments:
-    Keyword arguments:
-    resultId -- URI to the instance we want to retrieve and decode
-    searchResult -- SearchResult object which corresponds to the object we want to fetch used
-    Returns:
-    a dict representing the instance using JSON-LD conventions for keys and values
-    """
-
-    # if resultId and searchResult?
-    if not(bool(resultId is None) ^ bool(searchResult is None)) :
-        raise ValueError('only one of resultId and searchResult arguments can be specified')
-
-    if searchResult is not None:
-        resultId = searchResult.resultId
-
-    req = requests.get(resultId, headers = util.JSON_CONTENT)
-    return load_instance(data_str = req.content)
-
 
 def upload_orgs(client=DEFAULT_CLIENT):
     orgs = [('hbp', 'The HBP Organization'),
