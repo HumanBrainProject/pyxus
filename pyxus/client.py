@@ -3,7 +3,6 @@ import requests
 import logging
 from pyxus.payload import NexusPayload, JSON_CONTENT
 
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -29,7 +28,7 @@ class SearchResult(object):
         self.schema = schema_list.pop()
 
     def __unicode__(self):
-        '(result_id:{},schema:{}'.format(result_id, schema)
+        '(result_id:{},schema:{}'.format(self.result_id, self.schema)
 
 
 class NexusException(Exception):
@@ -94,7 +93,7 @@ class OrgCRUD(object):
             'description': desc
         }
         api = '/organizations/{name}'.format(name=name)
-        return self.put(api, obj)
+        return self.put(api, json.dumps(obj))
 
     def read_org(self, name):
         api = '/organizations/{name}'.format(name=name)
@@ -111,14 +110,14 @@ class DomainCRUD(object):
         obj = {
             'description': desc
         }
-        api = '/organizations/{org}/domain/{dom}'.format(
+        api = '/organizations/{org}/domains/{dom}'.format(
             org=org,
             dom=dom
         )
-        return self.put(api, obj)
+        return self.put(api, json.dumps(obj))
 
     def read_domain(self, org, dom):
-        api = '/organizations/{org}/domain/{dom}'.format(
+        api = '/organizations/{org}/domains/{dom}'.format(
             org=org,
             dom=dom
         )
@@ -131,7 +130,7 @@ class SchemaCRUD(object):
         api = '/schemas{name}'.format(name=name)
         # printing here just to reproduce master branch behavior, ideally log
         LOGGER.info("uploading schema to %s", api)
-        response = self.put(api, content)
+        response = self.put(api, json.dumps(content))
         if response > 201:
             LOGGER.info("Failure uploading schema to %s", api)
             LOGGER.info("Code:%s (%s) - %s", response.status_code,
@@ -176,7 +175,7 @@ class InstanceCRUD(object):
             'description': desc
         }
         api = '/organizations/{name}'.format(name=name)
-        return self.put(api, obj)
+        return self.put(api, json.dumps(obj))
 
     def read_instance(self, result_id=None, search_result=None):
         """read an instance from a result_id URI or a SearchResult object
@@ -214,13 +213,13 @@ class InstanceCRUD(object):
         a list of SearchResult objects
         """
         api = '/data?q={}&offset={}&limit={}'.format(term, offset, limit)
-        request = self.get(api)
-        if request.status_code < 400:
-            results = json.loads(request.content)['results']
+        response = self.get(api)
+        if response.status_code < 400:
+            results = json.loads(response.content)['results']
             return [SearchResult(r) for r in results]
         else:
-            raise NexusException(request.status_code,
-                                 request.reason)
+            raise NexusException(response.status_code,
+                                 response.reason)
 
 
 class CRUDMixin(OrgCRUD, DomainCRUD, SchemaCRUD, InstanceCRUD):
@@ -229,14 +228,40 @@ class CRUDMixin(OrgCRUD, DomainCRUD, SchemaCRUD, InstanceCRUD):
 
 class NexusClient(CRUDMixin, HTTPMixin):
 
+    SUPPORTED_VERSIONS = ['0.6.1']
+
     def __init__(self, scheme='http', host='localhost:8080', prefix='v0'):
-        self.api_root = '{scheme}://{host}/{prefix}'.format(
-            scheme=scheme,
-            host=host,
-            prefix=prefix,
-        )
         self.api_root_dict = {
             'scheme': scheme,
             'host': host,
             'prefix': prefix
         }
+        self.api_root = '{scheme}://{host}/{prefix}'.format(
+            **self.api_root_dict)
+
+        self.version = None
+        self.env = None
+
+    def version_check(self, supported_versions=SUPPORTED_VERSIONS):
+        server_metadata_url = '{scheme}://{host}/'.format(
+            **self.api_root_dict)
+
+        response = self._direct_request('get', server_metadata_url)
+
+        if response.status_code < 400:
+            meta = json.loads(response.content)
+            service_name = meta.get('name')
+            self.version = meta.get('version')
+            self.env = meta.get('env')
+
+            if service_name == 'kg' and self.version in supported_versions:
+                LOGGER.info('Version supported : %s\nenv: %s',
+                            self.version, self.env)
+                return True
+            else:
+                LOGGER.error('**Version unsupported**: %s\nenv: %s',
+                             self.version, self.env)
+                return True
+        else:
+            raise NexusException(response.status_code,
+                                 response.reason)

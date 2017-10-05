@@ -1,14 +1,13 @@
 import json
 
-
-JSON_CONTENT = { "Content-type" : "application/json" }
+JSON_CONTENT = {"Content-type": "application/json"}
 
 
 class NexusPayload(dict):
     """
     Simple wrapper for JSON-LD / SHACL data.
     """
-    
+
     def __init__(self, *args, **kwargs):
         super(NexusPayload, self).__init__(*args, **kwargs)
 
