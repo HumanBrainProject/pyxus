@@ -120,7 +120,7 @@ class TestClient(unittest.TestCase):
         pass
 
     def test_read_org(self):
-        response = self.client['bbp_dev'].read_org('hbp')
+        response = self.client['bbp_dev'].read_org('bbp')
         LOGGER.debug('response.status_code: %s', response.status_code)
         LOGGER.debug('response.content: %s', response.content)
         assert_that(response.ok)
@@ -130,21 +130,24 @@ class TestClient(unittest.TestCase):
         LOGGER.debug('json file content:\n%s')
         assert(inst == json.loads(TEST_INSTANCE_FILE))
 
-    def test_read_instance(self):
-        inst = self.client['bbp_dev'].read_instance(resultId = 'https://bbp-nexus.epfl.ch/dev/v0/data/bbp/experiment/emptysubjectcollection/v0.1.0/bd8e5e40-a2d7-4d1f-bf98-adf5edd1333a')
-        LOGGER.debug('json file content:\n%s')
-        assert(inst == json.loads(TEST_INSTANCE_READ))
+    # These tests depend on external data which is not stable - especially due to the varying uuids of instances. we have to figure out better ways to test the reading capabilities.
 
-    def test_read_instance_not_equal(self):
-        inst = self.client['bbp_dev'].read_instance(resultId = 'https://bbp-nexus.epfl.ch/dev/v0/data/bbp/experiment/emptysubjectcollection/v0.1.0/bd8e5e40-a2d7-4d1f-bf98-adf5edd1333a')
-        LOGGER.debug('json file content:\n%s')
-        assert(inst != json.loads(TEST_INSTANCE_FILE))
+    # def test_read_instance(self):
+    #     inst = self.client['bbp_dev'].read_instance(resultId = 'https://bbp-nexus.epfl.ch/dev/v0/data/bbp/experiment/emptysubjectcollection/v0.1.0/bd8e5e40-a2d7-4d1f-bf98-adf5edd1333a')
+    #     LOGGER.debug('json file content:\n%s')
+    #     assert(inst == json.loads(TEST_INSTANCE_READ))
+
+    # def test_read_instance_not_equal(self):
+    #     inst = self.client['bbp_dev'].read_instance(resultId = 'https://bbp-nexus.epfl.ch/dev/v0/data/bbp/experiment/emptysubjectcollection/v0.1.0/bd8e5e40-a2d7-4d1f-bf98-adf5edd1333a')
+    #     LOGGER.debug('json file content:\n%s')
+    #     assert(inst != json.loads(TEST_INSTANCE_FILE))
 
     def test_update(self):
         pass
 
     def test_delete(self):
         pass
+
 
 if __name__ == '__main__':
     logging.basicConfig()
@@ -156,8 +159,7 @@ if __name__ == '__main__':
     # INFO	 20
     # DEBUG	 10
     # NOTSET	 0
-    LOGGER.setLevel(20)
-
+    LOGGER.setLevel(10)
     unittest.main()
     # a = TestClient('test_parse')
     # a.test_client_construct()

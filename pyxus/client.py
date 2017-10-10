@@ -14,6 +14,10 @@ def is_none(x):
     return x is None
 
 
+def build_schema_path(schema_organization, schema_domain, schema_name, schema_version):
+    return "{}/{}/{}/{}".format(schema_organization, schema_domain, schema_name, schema_version)
+
+
 class SearchResult(object):
     score = 0.0
     result_id = None
@@ -52,14 +56,17 @@ class HTTPMixin(object):
             api_root=self.api_root,
             endpoint_url=endpoint_url
         )
+        if type(data) is dict:
+            data = json.dumps(data)
         headers = headers or {}
         headers.update(JSON_CONTENT)
         LOGGER.debug('request:%s %s\n%r', method_name, full_url, data)
-        response = method(full_url, str(data), headers=headers)
-        LOGGER.debug('returned %s', response.status_code)
+        response = method(full_url, data, headers=headers)
+        LOGGER.debug('returned %s %s', response.status_code, response.content)
         return response
 
-    def _direct_request(self, method_name, full_url, data=None, headers=None):
+    @staticmethod
+    def _direct_request(method_name, full_url, data=None, headers=None):
         LOGGER.debug('%s %s\n%r', method_name, full_url, data)
         method = getattr(requests, method_name)
         headers = headers or {}
@@ -124,14 +131,19 @@ class DomainCRUD(object):
         return self.get(api)
 
 
+
 class SchemaCRUD(object):
 
-    def create_schema(self, name, content):
-        api = '/schemas{name}'.format(name=name)
+    def read_schema(self, schema_path):
+        api = '/schemas/{schema_path}'.format(schema_path=schema_path)
+        return self.get(api)
+
+    def upload_schema(self, schema_path, content):
+        api = '/schemas/{schema_path}'.format(schema_path=schema_path)
         # printing here just to reproduce master branch behavior, ideally log
         LOGGER.info("uploading schema to %s", api)
         response = self.put(api, json.dumps(content))
-        if response > 201:
+        if response.status_code > 201:
             LOGGER.info("Failure uploading schema to %s", api)
             LOGGER.info("Code:%s (%s) - %s", response.status_code,
                         response.reason, response.text)
@@ -139,11 +151,46 @@ class SchemaCRUD(object):
             LOGGER.info(content)
             return False
         else:
-            return True
+            revision = json.loads(response.content).get("rev")
+            LOGGER.info("Successfully created schema in revision %i", revision)
+            return revision
+
+    def publish_schema(self, schema_path, revision, publish=True):
+        api = '/schemas/{schema_path}/config?rev={revision}'.format(schema_path=schema_path, revision=revision)
+        # printing here just to reproduce master branch behavior, ideally log
+        LOGGER.info("publishing schema %s", api)
+        request_entity = {
+            'published': publish
+        }
+        response = self.patch(api, json.dumps(request_entity))
+        if response.status_code > 201:
+            LOGGER.info("Failure publishing schema (%s)", api)
+            LOGGER.info("Code:%s (%s) - %s", response.status_code,
+                        response.reason, response.text)
+            return False
+        else:
+            revision = json.loads(response.content).get("rev")
+            LOGGER.info("Successfully published schema in revision %i", revision)
+            return revision
+
+    def create_schema(self, schema_organization, schema_domain, schema_name, schema_version, content, force_domain_creation):
+        if force_domain_creation:
+            if(self.read_org(schema_organization).status_code>201):
+                LOGGER.info("Creation of organization %s triggered by schema definition", schema_organization)
+                self.create_org(schema_organization, "Organization created by schema {}. TODO: create better description".format(schema_name))
+            if(self.read_domain(schema_organization, schema_domain).status_code>201):
+                LOGGER.info("Creation of domain %s in organization %s triggered by schema definition", schema_organization, schema_domain)
+                self.create_domain(schema_organization, schema_domain, "Domain created by schema {}. TODO: create better description".format(schema_name))
+        revision = self.upload_schema(build_schema_path(schema_organization, schema_domain, schema_name, schema_version), content)
+        if revision:
+            return revision
+        return False
 
 
 class InstanceCRUD(object):
-    def load_instance(self, data_file=None, data_str=None):
+
+    @staticmethod
+    def load_instance(data_file=None, data_str=None):
         """Load a Nexus instance from a json file.
 
         Arguments:
@@ -157,7 +204,6 @@ class InstanceCRUD(object):
             raise ValueError('Only one of data_file \
             or data_str can be specified')
 
-        j = None
         if data_file is not None:
             if isinstance(data_file, file):
                 j = json.load(data_file)
@@ -170,12 +216,11 @@ class InstanceCRUD(object):
 
         return j
 
-    def create_instance(self, name, desc):
-        obj = {
-            'description': desc
-        }
-        api = '/organizations/{name}'.format(name=name)
-        return self.put(api, json.dumps(obj))
+    def create_instance(self, schema_path, content):
+        api = '/data/{schema_path}'.format(schema_path=schema_path)
+        LOGGER.info("creating instance for schema %s with content %s", schema_path, api)
+        response = self.post(api, content)
+        return response
 
     def read_instance(self, result_id=None, search_result=None):
         """read an instance from a result_id URI or a SearchResult object

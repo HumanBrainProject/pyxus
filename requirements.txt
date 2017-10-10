@@ -16,7 +16,6 @@ prompt-toolkit==1.0.15
 ptyprocess==0.5.2
 Pygments==2.2.0
 pyparsing==2.2.0
-pystache==0.5.4
 requests==2.18.4
 rdflib==4.2.2
 rdflib-jsonld==0.4.0
