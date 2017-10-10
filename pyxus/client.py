@@ -97,7 +97,10 @@ class OrgCRUD(object):
 
     def create_org(self, name, desc):
         obj = {
-            'description': desc
+            "@context": {
+                "schema": "http://schema.org/"
+            },
+            "schema:name": name
         }
         api = '/organizations/{name}'.format(name=name)
         return self.put(api, json.dumps(obj))
@@ -143,6 +146,7 @@ class SchemaCRUD(object):
         # printing here just to reproduce master branch behavior, ideally log
         LOGGER.info("uploading schema to %s", api)
         response = self.put(api, json.dumps(content))
+        print response.reason, response.text, response.status_code
         if response.status_code > 201:
             LOGGER.info("Failure uploading schema to %s", api)
             LOGGER.info("Code:%s (%s) - %s", response.status_code,
