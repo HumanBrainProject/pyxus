@@ -1,7 +1,7 @@
 JSON_CONTENT = {"Content-type": "application/json"}
 
 NEXUS_ENV_LOCALHOST = {'scheme': 'http',
-                       'host': 'localhost',
+                       'host': 'localhost:8080',
                        'prefix': 'v0'}
 
 NEXUS_ENV_HBP_PROD = {'scheme': 'https',

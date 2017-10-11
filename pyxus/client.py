@@ -1,6 +1,7 @@
 import json
 import requests
 import logging
+import re
 from pyxus.payload import NexusPayload, JSON_CONTENT
 
 LOGGER = logging.getLogger(__name__)
@@ -22,17 +23,42 @@ class SearchResult(object):
     score = 0.0
     result_id = None
     schema = None
+    self_link = None
 
     def __init__(self, result_dict):
         self.result_id = result_dict['resultId']
         self.score = result_dict['score']
+
         links = result_dict['source']['links']
         schema_list = [x['href'] for x in links if x['rel'] == 'schema']
+        self.self_link = str([x['href'] for x in links if x['rel'] == 'self'][0])
         assert(len(schema_list) == 1)
         self.schema = schema_list.pop()
 
     def __unicode__(self):
         '(result_id:{},schema:{}'.format(self.result_id, self.schema)
+
+class SearchResultInstance(object):
+
+    raw_result = None
+    instance = None
+
+    def __init__(self, raw_result):
+        self.raw_result = raw_result
+        self.instance = self.__simplifyResult(raw_result)
+
+    def __simplifyResult(self, json):
+        simple = {}
+        for key in json:
+            if not key.startswith("@"):
+                new_key = re.sub(".*?:", "", key)
+                if type(json[key]) is dict:
+                    simple[new_key] = self.__simplifyResult(json[key])
+                else:
+                    simple[new_key] = json[key]
+        return simple
+
+
 
 
 class NexusException(Exception):
@@ -224,9 +250,21 @@ class InstanceCRUD(object):
         api = '/data/{schema_path}'.format(schema_path=schema_path)
         LOGGER.info("creating instance for schema %s with content %s", schema_path, api)
         response = self.post(api, content)
-        return response
+        if response.status_code > 201:
+            LOGGER.error("Was not able to create instance for schema %s due to %s", schema_path, response.reason)
 
-    def read_instance(self, result_id=None, search_result=None):
+    def read_all_instances(self, list_of_search_results):
+        l = []
+        for result in list_of_search_results:
+            l.append(self.read_instance(search_result=result))
+        return l
+
+    def get_self_link(self, self_link):
+        expected_host = self.api_root.replace(self.api_root_dict.get('host'), "kg.*?")
+        #this replacement is to fix that the service returns a wrong host
+        return re.sub(expected_host, self.api_root, self_link)
+
+    def read_instance(self, link_url=None, search_result=None):
         """read an instance from a result_id URI or a SearchResult object
 
         Arguments:
@@ -239,15 +277,15 @@ class InstanceCRUD(object):
         for keys and values
         """
 
-        if logical_xor(is_none(result_id), is_none(search_result)):
+        if logical_xor(is_none(link_url), is_none(search_result)):
             raise ValueError('only one of result_id and \
             search_result arguments can be specified')
 
         if search_result is not None:
-            result_id = search_result.result_id
+            link_url = self.get_self_link(search_result.self_link)
 
-        response = self._direct_request('get', result_id)
-        return self.load_instance(data_str=response.content)
+        response = self._direct_request('get', link_url)
+        return SearchResultInstance(self.load_instance(data_str=response.content))
 
     def search_instance(self, term, offset=0, limit=10, filters=None):
         """search for instances matching a full-text search term
