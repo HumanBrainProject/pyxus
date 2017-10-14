@@ -260,7 +260,7 @@ class InstanceCRUD(object):
         return l
 
     def get_self_link(self, self_link):
-        expected_host = self.api_root.replace(self.api_root_dict.get('host'), "kg.*?")
+        expected_host = self.api_root.replace(self.api_root_dict.get('scheme')+"://"+self.api_root_dict.get('host')+"/", "http://kg.*?/")
         #this replacement is to fix that the service returns a wrong host
         return re.sub(expected_host, self.api_root, self_link)
 

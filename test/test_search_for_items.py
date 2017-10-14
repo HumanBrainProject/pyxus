@@ -6,7 +6,7 @@ from hamcrest.library.number.ordering_comparison import greater_than
 from pyxus.client import NexusClient
 import pyxus.config as conf
 
-from hamcrest import (assert_that, instance_of, has_properties, not_none)
+from hamcrest import (assert_that, instance_of, has_properties, not_none, equal_to)
 
 
 class TestSearchForItems(unittest.TestCase):
@@ -26,3 +26,13 @@ class TestSearchForItems(unittest.TestCase):
             if data_url:
                 print data_url.get("downloadURL")
         print resolved
+
+
+
+    def test_get_self_link_with_https(self):
+        self.client.api_root_dict = {'scheme': 'https',
+                     'host': 'nexus-dev.humanbrainproject.org',
+                     'prefix': 'v0'}
+        self.client.api_root="https://nexus-dev.humanbrainproject.org/v0"
+        self_link = self.client.get_self_link("http://kg:8080/v0/data/hbp/core/celloptimization/v0.0.1/3fa38385-796d-4bf6-b692-55b9b2861a3c")
+        assert_that(self_link, equal_to("https://nexus-dev.humanbrainproject.org/v0/data/hbp/core/celloptimization/v0.0.1/3fa38385-796d-4bf6-b692-55b9b2861a3c"))
