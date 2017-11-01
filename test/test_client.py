@@ -1,16 +1,14 @@
-
 # encoding: utf-8
 
 from pyxus.client import NexusClient
 
-import glob
 import json
 import logging
 import unittest
 import pyxus.config as conf
-import pyxus.util as u
+import sys,os
 
-from hamcrest import (assert_that, instance_of, has_properties, not_none)
+from hamcrest import (assert_that, not_none)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -95,6 +93,7 @@ TEST_INSTANCE_READ="""
     }
 }"""
 
+
 class TestClient(unittest.TestCase):
 
     client = {}
@@ -111,36 +110,24 @@ class TestClient(unittest.TestCase):
 
     def test_client_envs(self):
         #explicitly test that the endpoints match the expected value
-        assert_that(self.client['localhost'].api_root, 'http://localhost:8080/v0')
-        assert_that(self.client['hbp_prod'].api_root, 'https://nexus.humanbrainproject.eu/v0')
-        assert_that(self.client['hbp_dev'].api_root, 'https://nexus-dev.humanbrainproject.eu/v0')
-        assert_that(self.client['bbp_dev'].api_root, 'https://bbp-nexus.epfl.ch/dev/v0')
+        assert_that(self.client['localhost']._http_client.api_root, 'http://localhost:8080/v0')
+        assert_that(self.client['hbp_prod']._http_client.api_root, 'https://nexus.humanbrainproject.eu/v0')
+        assert_that(self.client['hbp_dev']._http_client.api_root, 'https://nexus-dev.humanbrainproject.eu/v0')
+        assert_that(self.client['bbp_dev']._http_client.api_root, 'https://bbp-nexus.epfl.ch/dev/v0')
 
     def test_hbp_dev_create(self):
         pass
 
     def test_read_org(self):
-        response = self.client['bbp_dev'].read_org('bbp')
+        response = self.client['bbp_dev'].organization.read('bbp')
         LOGGER.debug('response.status_code: %s', response.status_code)
         LOGGER.debug('response.content: %s', response.content)
         assert_that(response.ok)
 
     def test_load_instance_from_data_file(self):
-        inst = self.client['bbp_dev'].load_instance(data_file = 'test/data/nexus_schemaorg_organization_data.json')
+        inst = self.client['bbp_dev'].instance._load_instance(data_file='test/data/nexus_schemaorg_organization_data.json')
         LOGGER.debug('json file content:\n%s')
         assert(inst == json.loads(TEST_INSTANCE_FILE))
-
-    # These tests depend on external data which is not stable - especially due to the varying uuids of instances. we have to figure out better ways to test the reading capabilities.
-
-    # def test_read_instance(self):
-    #     inst = self.client['bbp_dev'].read_instance(resultId = 'https://bbp-nexus.epfl.ch/dev/v0/data/bbp/experiment/emptysubjectcollection/v0.1.0/bd8e5e40-a2d7-4d1f-bf98-adf5edd1333a')
-    #     LOGGER.debug('json file content:\n%s')
-    #     assert(inst == json.loads(TEST_INSTANCE_READ))
-
-    # def test_read_instance_not_equal(self):
-    #     inst = self.client['bbp_dev'].read_instance(resultId = 'https://bbp-nexus.epfl.ch/dev/v0/data/bbp/experiment/emptysubjectcollection/v0.1.0/bd8e5e40-a2d7-4d1f-bf98-adf5edd1333a')
-    #     LOGGER.debug('json file content:\n%s')
-    #     assert(inst != json.loads(TEST_INSTANCE_FILE))
 
     def test_update(self):
         pass

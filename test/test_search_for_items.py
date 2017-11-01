@@ -14,25 +14,23 @@ class TestSearchForItems(unittest.TestCase):
 
     def setUp(self):
         logging.basicConfig(level=logging.DEBUG)
-        self.client = NexusClient(**conf.NEXUS_ENV_LOCALHOST)
+        self.client = NexusClient(**conf.NEXUS_ENV_HBP_DEV)
 
     def test_search_items(self):
         """ This test assumes specific test data - we therefore do not apply assumptions but make this test rather a manual one until we can ensure a specific testdata set. """
-        result = self.client.search_instance("interneuron", limit=100)
+        result = self.client.instance.search("interneuron", limit=100)
         assert_that(len(result), greater_than(0))
-        resolved = self.client.read_all_instances(result)
+        resolved = self.client.instance.read_all(result)
         for obj in resolved:
             data_url = obj.instance.get("dataurl")
             if data_url:
                 print data_url.get("downloadURL")
         print resolved
 
-
-
     def test_get_self_link_with_https(self):
         self.client.api_root_dict = {'scheme': 'https',
                      'host': 'nexus-dev.humanbrainproject.org',
                      'prefix': 'v0'}
-        self.client.api_root="https://nexus-dev.humanbrainproject.org/v0"
-        self_link = self.client.get_self_link("http://kg:8080/v0/data/hbp/core/celloptimization/v0.0.1/3fa38385-796d-4bf6-b692-55b9b2861a3c")
+        self.client._http_client.api_root="https://nexus-dev.humanbrainproject.org/v0"
+        self_link = self.client.instance._get_self_link("http://kg:8080/v0/data/hbp/core/celloptimization/v0.0.1/3fa38385-796d-4bf6-b692-55b9b2861a3c")
         assert_that(self_link, equal_to("https://nexus-dev.humanbrainproject.org/v0/data/hbp/core/celloptimization/v0.0.1/3fa38385-796d-4bf6-b692-55b9b2861a3c"))
