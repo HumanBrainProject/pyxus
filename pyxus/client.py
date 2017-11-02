@@ -24,10 +24,10 @@ class NexusClient(object):
         self.version = None
         self.env = None
         self._http_client = HttpClient(self.api_root_dict)
-        self.domain = Domain(self._http_client)
-        self.organization = Organization(self._http_client)
-        self.instance = Instance(self._http_client)
-        self.schema = Schema(self._http_client, self.domain, self.organization)
+        self.domains = Domain(self._http_client)
+        self.organizations = Organization(self._http_client)
+        self.instances = Instance(self._http_client)
+        self.schemas = Schema(self._http_client, self.domains, self.organizations)
 
     def version_check(self, supported_versions=SUPPORTED_VERSIONS):
         server_metadata_url = '{scheme}://{host}/'.format(
