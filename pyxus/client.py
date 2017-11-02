@@ -27,7 +27,7 @@ class NexusClient(object):
         self.domains = Domain(self._http_client)
         self.organizations = Organization(self._http_client)
         self.instances = Instance(self._http_client)
-        self.schemas = Schema(self._http_client, self.domains, self.organizations)
+        self.schemas = Schema(self._http_client)
 
     def version_check(self, supported_versions=SUPPORTED_VERSIONS):
         server_metadata_url = '{scheme}://{host}/'.format(
@@ -37,9 +37,9 @@ class NexusClient(object):
 
         if response.status_code < 400:
             meta = json.loads(response.content)
-            service_name = meta.get('name')
-            self.version = meta.get('version')
-            self.env = meta.get('env')
+            service_name = meta.read('name')
+            self.version = meta.read('version')
+            self.env = meta.read('env')
 
             if service_name == 'kg' and self.version in supported_versions:
                 LOGGER.info('Version supported : %s\nenv: %s',

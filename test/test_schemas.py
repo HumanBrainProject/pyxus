@@ -6,7 +6,7 @@ from hamcrest.library.number.ordering_comparison import greater_than
 from pyxus.client import NexusClient
 import pyxus.config as conf
 
-from hamcrest import (assert_that, instance_of, has_properties, not_none, equal_to)
+from hamcrest import (assert_that)
 
 
 class TestSearchForItems(unittest.TestCase):

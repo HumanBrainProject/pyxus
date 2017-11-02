@@ -3,6 +3,8 @@ import requests
 from pyxus.payload import JSON_CONTENT
 import json
 
+from pyxus.utils.exception import NexusException
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -29,7 +31,12 @@ class HttpClient(object):
         LOGGER.debug('request:%s %s\n%r', method_name, full_url, data)
         response = method(full_url, data, headers=headers)
         LOGGER.debug('returned %s %s', response.status_code, response.content)
-        return response
+        if response.status_code == 404:
+            return None
+        elif response.status_code<300:
+            return response.json()
+        else:
+            return response.raise_for_status()
 
     @staticmethod
     def _direct_request(method_name, full_url, data=None, headers=None):

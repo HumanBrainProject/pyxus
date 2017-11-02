@@ -1,80 +1,91 @@
 import logging
 import json
+from requests.exceptions import HTTPError
 
-LOGGER = logging.getLogger(__name__)
+from pyxus.resources.resource import Resource
+from pyxus.utils.exception import NexusException
 
+logger = logging.getLogger(__name__)
 
-class Schema(object):
+class Schema(Resource):
 
-    def __init__(self, http_client, domain, organization):
-        self.http_client = http_client
-        self.domain = domain
-        self.organization = organization
+    def create(self, organization, domain, schema, version, content):
+        schema_path = Schema._build_schema_path(organization, domain, schema, version)
+        api = '/schemas/{schema_path}'.format(schema_path=schema_path)
+        logger.info("creating schema %s", api)
+        return self.http_client.put(api, content)
+
+    def create_with_domain(self, organization_repo, domain_repo, organization, domain, schema, version, content):
+        organization_from_graph = organization_repo.read(organization)
+        if organization_from_graph is None:
+            logger.info("Creation of organization %s triggered by schema definition", organization)
+            organization_repo.create(organization, "Organization created by schema {}. TODO: create better description".format(schema))
+
+        domain = domain_repo.read_by_path(organization, domain)
+        if domain is None:
+            logger.info("Creation of domain %s in organization %s triggered by schema definition", organization, domain)
+            domain_repo.create(organization, domain, "Domain created by schema {}. TODO: create better description".format(schema))
+
+        return self.create(organization, domain, schema, version, content)
+
+    def read(self, organization, domain, schema, version, revision=None):
+        schema_path = Schema._build_schema_path(organization, domain, schema, version)
+        if revision is None:
+            api = '/schemas/{schema_path}'.format(schema_path=schema_path)
+        else:
+            api = '/schemas/{schema_path}?rev={rev}'.format(schema_path=schema_path, rev=revision)
+        return self.http_client.read(api)
+
+    def update(self, organization, domain, schema, version, content, previous_rev):
+        schema_path = Schema._build_schema_path(organization, domain, schema, version)
+        api = '/schemas/{schema_path}?rev={previous_rev}'.format(schema_path=schema_path, previous_rev=previous_rev)
+        logger.info("updating schema %s", api)
+        return self.http_client.put(api, content)
+
+    def publish(self, organization, domain, schema, version, revision=None, publish=True):
+        schema_path = Schema._build_schema_path(organization, domain, schema, version)
+        if revision is None:
+            revision = self.get_last_revision(schema_path)
+        api = '/schemas/{schema_path}/config?rev={revision}'.format(schema_path=schema_path, revision=revision)
+        # printing here just to reproduce master branch behavior, ideally log
+        logger.info("update publish state of schema %s", api)
+        request_entity = {
+            'published': publish
+        }
+        try:
+            response = self.http_client.patch(api, request_entity)
+        except HTTPError as e:
+            reason = e.message
+            if e.response.content:
+                reason = json.loads(e.response.content).read("code")
+            logger.error("Failure updating publish state of schema %s: %s", api, reason)
+            raise NexusException(None, "Failure publishing schema {} because {}".format(api, reason))
+        if response is None:
+            raise NexusException(None, "Schema {} was not found".format(api))
+        else:
+            logger.info("Successfully updated publish status of schema in revision %i", revision)
+            return response
+
+    def deprecate(self, organization, domain, schema, version, revision=None):
+        schema_path = Schema._build_schema_path(organization, domain, schema, version)
+        if revision is None:
+            revision = self.get_last_revision(organization, domain, schema, version)
+        return self.http_client.delete('/schemas/{schema_path}?rev={revision}'.format(schema_path=schema_path, revision=revision))
+
+    def get_last_revision(self, organization, domain, schema, version):
+        return Schema.get_revision(self.read(organization, domain, schema, version))
 
     def list(self):
         api = '/schemas'
-        response = self.http_client.get(api)
+        response = self.http_client.read(api)
         if response.status_code > 201:
             raise ValueError("Failure listing schemas: ", response.reason)
         return json.loads(response.content)["results"]
 
-    def read(self, schema_path):
-        api = '/schemas/{schema_path}'.format(schema_path=schema_path)
-        return self.http_client.get(api)
-
-    def upload(self, schema_path, content):
-        api = '/schemas/{schema_path}'.format(schema_path=schema_path)
-        # printing here just to reproduce master branch behavior, ideally log
-        LOGGER.info("uploading schema to %s", api)
-        response = self.http_client.put(api, json.dumps(content))
-        print response.reason, response.text, response.status_code
-        if response.status_code > 201:
-            LOGGER.info("Failure uploading schema to %s", api)
-            LOGGER.info("Code:%s (%s) - %s", response.status_code,
-                        response.reason, response.text)
-            LOGGER.info("payload:")
-            LOGGER.info(content)
-            return False
-        else:
-            revision = json.loads(response.content).get("rev")
-            LOGGER.info("Successfully created schema in revision %i", revision)
-            return revision
-
-    def publish(self, schema_path, revision, publish=True):
-        api = '/schemas/{schema_path}/config?rev={revision}'.format(schema_path=schema_path, revision=revision)
-        # printing here just to reproduce master branch behavior, ideally log
-        LOGGER.info("publishing schema %s", api)
-        request_entity = {
-            'published': publish
-        }
-        response = self.http_client.patch(api, json.dumps(request_entity))
-        if response.status_code > 201:
-            LOGGER.info("Failure publishing schema (%s)", api)
-            LOGGER.info("Code:%s (%s) - %s", response.status_code,
-                        response.reason, response.text)
-            return False
-        else:
-            revision = json.loads(response.content).get("rev")
-            LOGGER.info("Successfully published schema in revision %i", revision)
-            return revision
-
-    def create(self, schema_organization, schema_domain, schema_name, schema_version, content, force_domain_creation):
-        if force_domain_creation:
-            if self.organization.read(schema_organization).status_code > 201:
-                LOGGER.info("Creation of organization %s triggered by schema definition", schema_organization)
-                self.organization.create(schema_organization, "Organization created by schema {}. TODO: create better description".format(schema_name))
-            if self.domain.read(schema_organization, schema_domain).status_code > 201:
-                LOGGER.info("Creation of domain %s in organization %s triggered by schema definition", schema_organization, schema_domain)
-                self.domain.create(schema_organization, schema_domain, "Domain created by schema {}. TODO: create better description".format(schema_name))
-        revision = self.upload(Schema._build_schema_path(schema_organization, schema_domain, schema_name, schema_version), content)
-        if revision:
-            return revision
-        return False
 
     @staticmethod
-    def _build_schema_path(schema_organization, schema_domain, schema_name, schema_version):
-        return "{}/{}/{}/{}".format(schema_organization, schema_domain, schema_name, schema_version)
+    def get_published(schema):
+        if schema is None:
+            raise NexusException(None, "Revision was not found")
+        return schema.read("published")
 
-    @staticmethod
-    def build_schema_path_from_schema_data(schema_data):
-        return Schema._build_schema_path(schema_data.organization, schema_data.domain, schema_data.schema_name, schema_data.version)
