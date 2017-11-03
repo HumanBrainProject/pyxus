@@ -31,12 +31,10 @@ class NexusClient(object):
 
         response = self._http_client.get(server_metadata_url)
 
-        if response.status_code < 400:
-            meta = json.loads(response.content)
-            service_name = meta.read('name')
-            self.version = meta.read('version')
-            self.env = meta.read('env')
-
+        if response is not None:
+            service_name = response.get('name')
+            self.version = response.get('version')
+            self.env = response.get('env')
             if service_name == 'kg' and self.version in supported_versions:
                 LOGGER.info('Version supported : %s\nenv: %s',
                             self.version, self.env)

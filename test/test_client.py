@@ -1,4 +1,5 @@
 # encoding: utf-8
+from hamcrest.core.core.isequal import equal_to
 
 from pyxus.client import NexusClient
 
@@ -33,3 +34,6 @@ class TestClient(unittest.TestCase):
         assert_that(self.client['hbp_prod']._http_client.api_root, 'https://nexus.humanbrainproject.eu/v0')
         assert_that(self.client['hbp_dev']._http_client.api_root, 'https://nexus-dev.humanbrainproject.eu/v0')
         assert_that(self.client['bbp_dev']._http_client.api_root, 'https://bbp-nexus.epfl.ch/dev/v0')
+
+    def test_version_check(self):
+        assert_that(self.client['localhost'].version_check(), equal_to(True))
