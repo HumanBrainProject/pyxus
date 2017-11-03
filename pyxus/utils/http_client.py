@@ -1,9 +1,10 @@
 import logging
 import requests
-from pyxus.payload import JSON_CONTENT
 import json
 
 LOGGER = logging.getLogger(__name__)
+
+JSON_CONTENT = {"Content-type": "application/json"}
 
 
 class HttpClient(object):
