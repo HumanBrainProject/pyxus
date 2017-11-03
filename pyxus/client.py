@@ -1,10 +1,7 @@
 import json
 import logging
 
-from pyxus.resources.domains import Domain
-from pyxus.resources.instances import Instance
-from pyxus.resources.organizations import Organization
-from pyxus.resources.schemas import Schema
+from pyxus.resources.repository import DomainRepository, OrganizationRepository, InstanceRepository, SchemaRepository
 from pyxus.utils.exception import NexusException
 from pyxus.utils.http_client import HttpClient
 
@@ -24,10 +21,10 @@ class NexusClient(object):
         self.version = None
         self.env = None
         self._http_client = HttpClient(self.api_root_dict)
-        self.domains = Domain(self._http_client)
-        self.organizations = Organization(self._http_client)
-        self.instances = Instance(self._http_client)
-        self.schemas = Schema(self._http_client)
+        self.domains = DomainRepository(self._http_client)
+        self.organizations = OrganizationRepository(self._http_client)
+        self.instances = InstanceRepository(self._http_client)
+        self.schemas = SchemaRepository(self._http_client)
 
     def version_check(self, supported_versions=SUPPORTED_VERSIONS):
         server_metadata_url = '{scheme}://{host}/'.format(

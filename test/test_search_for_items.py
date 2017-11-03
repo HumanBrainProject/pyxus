@@ -18,14 +18,15 @@ class TestSearchForItems(unittest.TestCase):
 
     def test_search_items(self):
         """ This test assumes specific test data - we therefore do not apply assumptions but make this test rather a manual one until we can ensure a specific testdata set. """
-        result = self.client.instances.search("interneuron", limit=100)
-        assert_that(len(result), greater_than(0))
-        resolved = self.client.instances.resolve_all(result)
-        for obj in resolved:
-            data_url = obj.instance.read("dataurl")
+        search = self.client.instances.list(full_text_query="interneuron")
+        assert_that(len(search.results), greater_than(0))
+        results = self.client.instances.resolve_all(search)
+        print results
+        for obj in results:
+            data_url = obj.json["hbp:dataurl"]
             if data_url:
-                print data_url.read("downloadURL")
-        print resolved
+                print data_url["nxcv:downloadURL"]
+
 
     def test_get_self_link_with_https(self):
         self.client.api_root_dict = {'scheme': 'https',
