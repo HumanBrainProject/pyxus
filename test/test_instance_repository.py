@@ -25,7 +25,7 @@ class TestInstanceRepository(TestCase):
     @staticmethod
     def _assert_valid_default_entity(result, identifier):
         assert_that(result, instance_of(Instance))
-        assert_that(result.json, not_none())
+        assert_that(result.data, not_none())
         assert_that(result.get_revision(), greater_than(0))
         assert_that(result.id, equal_to(identifier))
         assert_that(result.path, equal_to("/data/" + identifier))
@@ -74,10 +74,10 @@ class TestInstanceRepository(TestCase):
 
     def test_update(self):
         entity = self.repository.read(self.default_prefix, "core", "schematest", "v0.0.6", self._get_instance_uuid())
-        entity.json["description"] = "New description"
+        entity.data["description"] = "New description"
         entity = self.repository.update(entity)
-        assert_that(entity.json["description"], not_none())
-        entity.json["description"] = None
+        assert_that(entity.get_data("description"), not_none())
+        entity.data["description"] = None
         self.repository.update(entity)
 
     def test_search_fulltext(self):

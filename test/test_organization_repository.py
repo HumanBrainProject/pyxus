@@ -17,25 +17,35 @@ from hamcrest import (assert_that)
 
 class TestOrganizationRepository(TestCase):
 
+    @staticmethod
+    def _assert_valid_default_entity(result, identifier):
+        assert_that(result, instance_of(Organization))
+        assert_that(result.data, not_none())
+        assert_that(result.get_revision(), greater_than(0))
+        assert_that(result.id, equal_to(identifier))
+        assert_that(result.path, equal_to("/organizations/" + identifier))
+
+    @staticmethod
+    def _assert_valid_search_list_result(search, expected_length=None):
+        assert_that(search, not_none())
+        assert_that(search, instance_of(SearchResultList))
+        assert_that(search.results, not_none())
+        if expected_length is not None:
+            assert_that(len(search.results), expected_length)
+
+
     def setUp(self):
         logging.basicConfig(level=logging.DEBUG)
         self.repository = OrganizationRepository(HttpClient(conf.NEXUS_ENV_LOCALHOST))
 
     def test_read_latest_revision(self):
         result = self.repository.read("hbp")
-        assert_that(result, instance_of(Organization))
-        assert_that(result.json, not_none())
-        assert_that(result.get_revision(), greater_than(0))
-        assert_that(result.id, equal_to("hbp"))
-        assert_that(result.path, equal_to("/organizations/hbp"))
+        self._assert_valid_default_entity(result, "hbp")
 
     def test_read_revision_one(self):
         result = self.repository.read("hbp", 1)
-        assert_that(result, instance_of(Organization))
-        assert_that(result.json, not_none())
+        self._assert_valid_default_entity(result, "hbp")
         assert_that(result.get_revision(), equal_to(1))
-        assert_that(result.id, equal_to("hbp"))
-        assert_that(result.path, equal_to("/organizations/hbp"))
 
     def test_read_unknown(self):
         result = self.repository.read("acme_corp")
@@ -47,29 +57,23 @@ class TestOrganizationRepository(TestCase):
         entity = Organization.create_new(random_org, "Test driven creation of an organization")
         result = self.repository.create(entity)
         assert_that(result, equal_to(entity))
-        assert_that(result, instance_of(Organization))
-        assert_that(result.json, not_none())
+        self._assert_valid_default_entity(result, random_org)
         assert_that(result.get_revision(), equal_to(1))
-        assert_that(result.id, equal_to(random_org))
-        assert_that(result.path, equal_to("/organizations/"+random_org))
         self._test_deprecate(entity)
 
     def _test_deprecate(self, org):
         # deprecate organization
         result = self.repository.delete(org)
-        assert_that(result, instance_of(Organization))
-        assert_that(result.json, not_none())
+        self._assert_valid_default_entity(result, org.id)
         assert_that(result.get_revision(), equal_to(2))
-        assert_that(result.id, equal_to(org.id))
-        assert_that(result.path, equal_to("/organizations/" + org.id))
 
     def test_update(self):
         entity = self.repository.read("hbp")
-        initial_description = entity.json["schema:description"]
-        entity.json["schema:description"] = "New description"
+        initial_description = entity.get_data("description")
+        entity.data["schema:description"] = "New description"
         entity = self.repository.update(entity)
-        assert_that(entity.json["schema:description"], is_not(equal_to(initial_description)))
-        entity.json["schema:description"] = initial_description
+        assert_that(entity.get_data("description"), is_not(equal_to(initial_description)))
+        entity.data["schema:description"] = initial_description
         self.repository.update(entity)
 
     def test_search_fulltext(self):
@@ -123,4 +127,4 @@ class TestOrganizationRepository(TestCase):
         assert_that(result, instance_of(list))
         assert_that(len(result), greater_than(0))
         assert_that(result[0], instance_of(Organization))
-        assert_that(result[0].json, not_none())
+        assert_that(result[0].data, not_none())

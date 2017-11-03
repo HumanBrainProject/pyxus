@@ -22,7 +22,7 @@ class TestDomainRepository(TestCase):
     @staticmethod
     def _assert_valid_default_entity(result, identifier="hbp/core"):
         assert_that(result, instance_of(Domain))
-        assert_that(result.json, not_none())
+        assert_that(result.data, not_none())
         assert_that(result.get_revision(), greater_than(0))
         assert_that(result.id, equal_to(identifier))
         assert_that(result.path, equal_to("/domains/" + identifier))
@@ -70,11 +70,11 @@ class TestDomainRepository(TestCase):
 
     def test_update(self):
         entity = self.repository.read(self.default_prefix, "core")
-        initial_description = entity.json["description"]
-        entity.json["description"] = "New description"
+        initial_description = entity.get_data("description")
+        entity.data["description"] = "New description"
         entity = self.repository.update(entity)
-        assert_that(entity.json["description"], is_not(equal_to(initial_description)))
-        entity.json["description"] = initial_description
+        assert_that(entity.get_data("description"), is_not(equal_to(initial_description)))
+        entity.data["description"] = initial_description
         self.repository.update(entity)
 
     def test_search_fulltext(self):

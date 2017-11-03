@@ -2,7 +2,6 @@ import json
 import logging
 
 from pyxus.resources.repository import DomainRepository, OrganizationRepository, InstanceRepository, SchemaRepository
-from pyxus.utils.exception import NexusException
 from pyxus.utils.http_client import HttpClient
 
 LOGGER = logging.getLogger(__name__)
@@ -47,5 +46,15 @@ class NexusClient(object):
                              self.version, self.env)
                 return True
         else:
-            raise NexusException(response.status_code,
-                                 response.reason)
+            raise NexusException(response.reason)
+
+
+class NexusException(Exception):
+    """Exception raised when a Nexus call fails
+
+    Attributes:
+    http_status_code -- code returned by the API
+    message -- message for the exception
+    """
+    def __init__(self, message):
+        self.message = message

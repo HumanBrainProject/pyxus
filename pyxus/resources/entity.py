@@ -3,9 +3,9 @@ import re
 
 class Entity(object):
 
-    def __init__(self, identifier, json, root_path):
+    def __init__(self, identifier, data, root_path):
         self.id = identifier
-        self.json = json
+        self.data = data
         self.root_path = root_path
         self.path = None
         self.build_path()
@@ -13,8 +13,34 @@ class Entity(object):
     def build_path(self):
         self.path = "{}/{}".format(self.root_path, self.id)
 
+    def get_simplified_data(self):
+        return self._get_simplified_data(self.data)
+
+    def get_data(self, key, simplified=True):
+        if key in self.data:
+            return self._get_simplified_data(self.data[key]) if simplified else self.data[key]
+        elif simplified:
+            for k in self.data:
+                if re.match(".*?:"+key, k):
+                    return  self._get_simplified_data(self.data[k])
+        return None
+
+    @staticmethod
+    def _get_simplified_data(data):
+        if not type(data) is dict:
+            return data
+        simple = {}
+        for key in data:
+            if not key.startswith("@"):
+                new_key = re.sub(".*?:", "", key)
+                if type(data[key]) is dict:
+                    simple[new_key] = Entity._get_simplified_data(data[key])
+                else:
+                    simple[new_key] = data[key]
+        return simple
+
     def get_revision(self):
-        return self.json["rev"]
+        return self.data["rev"]
 
     def __str__(self):
         return "{classname}: id={id}, path={path}, revision={revision}\ndata={data}".format(
@@ -22,7 +48,7 @@ class Entity(object):
             id=self.id,
             path=self.path,
             revision=self.get_revision(),
-            data=self.json
+            data=self.data
         )
 
     @staticmethod
@@ -82,7 +108,7 @@ class Schema(Entity):
         return Schema(identifier, content, Schema.path)
 
     def is_published(self):
-        return self.json["published"] if "published" in self.json else False
+        return self.data["published"] if "published" in self.data else False
 
 
 class Instance(Entity):

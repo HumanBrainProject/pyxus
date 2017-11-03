@@ -18,10 +18,16 @@ class TestSchemaRepository(TestCase):
 
     default_prefix = "hbp"
 
+    def setUp(self):
+        logging.basicConfig(level=logging.DEBUG)
+        self.repository = SchemaRepository(HttpClient(conf.NEXUS_ENV_LOCALHOST))
+        self._create_and_publish_testschema()
+        self._create_testschema_v2()
+
     @staticmethod
-    def _assert_valid_default_entity(result, identifier="hbp/core/schematest/v0.0.1"):
+    def _assert_valid_default_entity(result, identifier="hbp/core/testschema/v0.0.1"):
         assert_that(result, instance_of(Schema))
-        assert_that(result.json, not_none())
+        assert_that(result.data, not_none())
         assert_that(result.get_revision(), greater_than(0))
         assert_that(result.id, equal_to(identifier))
         assert_that(result.path, equal_to("/schemas/" + identifier))
@@ -34,21 +40,18 @@ class TestSchemaRepository(TestCase):
         if expected_length is not None:
             assert_that(len(search.results), expected_length)
 
-    def setUp(self):
-        logging.basicConfig(level=logging.DEBUG)
-        self.repository = SchemaRepository(HttpClient(conf.NEXUS_ENV_LOCALHOST))
 
     def test_read_latest_revision(self):
-        result = self.repository.read(self.default_prefix, "core", "schematest", "v0.0.1")
+        result = self.repository.read(self.default_prefix, "core", "testschema", "v0.0.1")
         self._assert_valid_default_entity(result)
 
     def test_read_revision_one(self):
-        result = self.repository.read(self.default_prefix, "core", "schematest", "v0.0.1", 1)
+        result = self.repository.read(self.default_prefix, "core", "testschema", "v0.0.1", 1)
         self._assert_valid_default_entity(result)
         assert_that(result.get_revision(), equal_to(1))
 
     def test_read_unknown(self):
-        result = self.repository.read("acme_corp", "core", "schematest", "v0.0.1")
+        result = self.repository.read("acme_corp", "core", "testschema", "v0.0.1")
         assert_that(result, none())
 
 #   ATTENTION: This test creates entities with random names. The execution of the test therefore increases data volume
@@ -81,14 +84,15 @@ class TestSchemaRepository(TestCase):
         assert_that(result.is_published(), equal_to(True))
 
     def test_update(self):
-        entity = self.repository.read(self.default_prefix, "core", "schematest", "v0.0.1")
-        entity.json["description"] = "New description"
+        entity = self.repository.read(self.default_prefix, "core", "testschema", "v0.0.2")
+        entity.data["description"] = "New description"
         entity = self.repository.update(entity)
-        assert_that(entity.json["description"], not_none())
-        entity.json["description"] = None
+        assert_that(entity.get_data("description"), not_none())
+        entity.data["description"] = None
         self.repository.update(entity)
 
     def test_search_fulltext(self):
+        self.test_create_and_publish()
         search = self.repository.list(full_text_query="schematest")
         self._assert_valid_search_list_result(search, 1)
 
@@ -126,15 +130,20 @@ class TestSchemaRepository(TestCase):
         assert_that(len(result), greater_than(0))
         self._assert_valid_default_entity(result[0], result[0].id)
 
-    def test_create_and_publish_schematest(self):
-        schema = self.repository.read("hbp", "core", "schematest", "v0.0.5")
+    def _create_and_publish_testschema(self):
+        schema = self.repository.read("hbp", "core", "testschema", "v0.0.1")
         if schema is None:
-            schema = self.repository.create(Schema.create_new("hbp", "core", "schematest", "v0.0.5", self.test_schema))
+            schema = self.repository.create(Schema.create_new("hbp", "core", "testschema", "v0.0.1", self.test_schema))
         if not schema.is_published():
             self.repository.publish(schema, True)
 
+    def _create_testschema_v2(self):
+        schema = self.repository.read("hbp", "core", "testschema", "v0.0.2")
+        if schema is None:
+            self.repository.create(Schema.create_new("hbp", "core", "testschema", "v0.0.2", self.test_schema))
+
     test_schema = {
-        "@id": "http://nexus.example.com/v0/schemas/hbp/core/schematest/v0.0.5",
+        "@id": "http://nexus.example.com/v0/schemas/hbp/core/testschema/v0.0.1",
         "@type": "owl:Ontology",
         "@context": {
             "maxCount": {
@@ -193,8 +202,8 @@ class TestSchemaRepository(TestCase):
                 "@type": "@id"
             },
             "schema": "http://schema.org/",
-            "this": "http://nexus.example.com/v0/vocab/hbp/core/schematest/v0.0.6/shapes/",
-            "hbp": "http://nexus.example.com/v0/vocab/hbp/core/schematest/",
+            "this": "http://nexus.example.com/v0/vocab/hbp/core/testschema/v0.0.1/shapes/",
+            "hbp": "http://nexus.example.com/v0/vocab/hbp/core/testschema/",
             "sh": "http://www.w3.org/ns/shacl#",
             "owl": "http://www.w3.org/2002/07/owl#",
             "xsd": "http://www.w3.org/2001/XMLSchema#",

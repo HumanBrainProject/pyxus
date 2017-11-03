@@ -11,16 +11,16 @@ class Repository(object):
         self._http_client = http_client
 
     def create(self, entity):
-        result = self._http_client.put(entity.path, entity.json)
-        entity.json = result
+        result = self._http_client.put(entity.path, entity.data)
+        entity.data = result
         return entity
 
     def update(self, entity):
         path = "{}?rev={}".format(entity.path, entity.get_revision())
-        result = self._http_client.put(path, entity.json)
+        result = self._http_client.put(path, entity.data)
         if result is not None:
             new_revision = result["rev"]
-            entity.json = self._read(entity.id, new_revision)
+            entity.data = self._read(entity.id, new_revision)
         return entity
 
     def delete(self, entity, revision=None):
@@ -30,7 +30,7 @@ class Repository(object):
         result = self._http_client.delete(path)
         if result is not None:
             new_revision = result["rev"]
-            entity.json = self._read(entity.id, new_revision)
+            entity.data = self._read(entity.id, new_revision)
         return entity
 
     def _read(self, identifier, revision=None):
@@ -74,13 +74,13 @@ class OrganizationRepository(Repository):
         super(OrganizationRepository, self).__init__(Organization.path, http_client)
 
     def read(self, name, revision=None):
-        json = self._read(name, revision)
-        return Organization(name, json, self.path) if json is not None else None
+        data = self._read(name, revision)
+        return Organization(name, data, self.path) if data is not None else None
 
     def resolve(self, search_result):
         identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
-        json = self._read(identifier)
-        return Organization(identifier, json, self.path) if json is not None else None
+        data = self._read(identifier)
+        return Organization(identifier, data, self.path) if data is not None else None
 
 
 class DomainRepository(Repository):
@@ -90,13 +90,13 @@ class DomainRepository(Repository):
 
     def read(self, organization, domain, revision=None):
         identifier = Domain.create_id(organization, domain)
-        json = self._read(identifier, revision)
-        return Domain(identifier, json, self.path) if json is not None else None
+        data = self._read(identifier, revision)
+        return Domain(identifier, data, self.path) if data is not None else None
 
     def resolve(self, search_result):
         identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
-        json = self._read(identifier)
-        return Domain(identifier, json, self.path) if json is not None else None
+        data = self._read(identifier)
+        return Domain(identifier, data, self.path) if data is not None else None
 
 
 class SchemaRepository(Repository):
@@ -106,8 +106,8 @@ class SchemaRepository(Repository):
 
     def read(self, organization, domain, schema, version, revision=None):
         identifier = Schema.create_id(organization, domain, schema, version)
-        json = self._read(identifier, revision)
-        return Schema(identifier, json, self.path) if json is not None else None
+        data = self._read(identifier, revision)
+        return Schema(identifier, data, self.path) if data is not None else None
 
     def publish(self, entity, publish, revision=None):
         if revision is None:
@@ -118,13 +118,13 @@ class SchemaRepository(Repository):
         })
         if result is not None:
             new_revision = result["rev"]
-            entity.json = self._read(entity.id, new_revision)
+            entity.data = self._read(entity.id, new_revision)
         return entity
 
     def resolve(self, search_result):
         identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
-        json = self._read(identifier)
-        return Schema(identifier, json, self.path) if json is not None else None
+        data = self._read(identifier)
+        return Schema(identifier, data, self.path) if data is not None else None
 
 
 class InstanceRepository(Repository):
@@ -133,8 +133,8 @@ class InstanceRepository(Repository):
         super(InstanceRepository, self).__init__(Instance.path, http_client)
 
     def create(self, entity):
-        result = self._http_client.post(entity.path, entity.json)
-        entity.json = result
+        result = self._http_client.post(entity.path, entity.data)
+        entity.data = result
         entity.id = Instance.extract_id_from_url(result.get("@id"), self.path)
         entity.build_path()
         return entity
@@ -148,15 +148,15 @@ class InstanceRepository(Repository):
         return None
 
     def read_by_full_id(self, full_id, revision=None):
-        json = self._read(full_id, revision)
-        return Instance(full_id, json, self.path) if json is not None else None
+        data = self._read(full_id, revision)
+        return Instance(full_id, data, self.path) if data is not None else None
 
     def read(self, organization, domain, schema, version, uuid, revision=None):
         identifier = Instance.create_id(organization, domain, schema, version)+"/"+uuid
-        json = self._read(identifier, revision)
-        return Instance(identifier, json, self.path) if json is not None else None
+        data = self._read(identifier, revision)
+        return Instance(identifier, data, self.path) if data is not None else None
 
     def resolve(self, search_result):
         identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
-        json = self._read(identifier)
-        return Instance(identifier, json, self.path) if json is not None else None
+        data = self._read(identifier)
+        return Instance(identifier, data, self.path) if data is not None else None
