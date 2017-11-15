@@ -1,17 +1,24 @@
 import re
-
+from pyld import jsonld
 
 class Entity(object):
 
     def __init__(self, identifier, data, root_path):
         self.id = identifier
         self.data = data
+        self.qualified_data = self._fully_qualify(self.data)
         self.root_path = root_path
         self.path = None
         self.build_path()
 
     def build_path(self):
         self.path = "{}/{}".format(self.root_path, self.id)
+
+    @staticmethod
+    def _fully_qualify(data):
+        data = jsonld.expand(data)
+        data = jsonld.compact(data, {})
+        return data
 
     def get_simplified_data(self):
         return self._get_simplified_data(self.data)

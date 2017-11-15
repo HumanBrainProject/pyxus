@@ -31,3 +31,17 @@ class TestEntity(TestCase):
     def test_extract_id_from_url_with_wrong_entity(self):
         with self.assertRaises(ValueError):
             Entity.extract_id_from_url("http://kg:8080/v0/organizations/hbp/core/celloptimization/v0.0.1", Schema.path)
+
+    def test_expand(self):
+        data = {
+             "@context": [{
+                 "hbp": "http://localhost:8080/vocab/hbp/core/celloptimization/",
+             }],
+            "imports": [
+                "{{scheme}}://{{host}}/{{prefix}}/schemas/nexus/core/datadownload/v1.0.0"
+            ],
+            "hbp:contributors": "Homer Simpson"
+        }
+        qualified_data  = Entity._fully_qualify(data)
+        expected_data = {'http://localhost:8080/vocab/hbp/core/celloptimization/contributors': 'Homer Simpson'}
+        assert_that(qualified_data, equal_to(expected_data))
