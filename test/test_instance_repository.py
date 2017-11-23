@@ -18,7 +18,7 @@ class TestInstanceRepository(TestCase):
     default_prefix = "hbp"
 
     def _get_instance_uuid(self):
-        single_result = self.repository.list(subpath="/hbp/core/schematest/v0.0.6", size=1, deprecated=None)
+        single_result = self.repository.list(subpath="/hbp/core/schematest/v0.0.1", size=1, deprecated=None)
         instance = single_result.results[0]
         return InstanceRepository._extract_uuid(instance.result_id)
 
@@ -44,22 +44,22 @@ class TestInstanceRepository(TestCase):
 
     def test_read_latest_revision(self):
         uuid = self._get_instance_uuid()
-        result = self.repository.read(self.default_prefix, "core", "schematest", "v0.0.6", uuid)
-        self._assert_valid_default_entity(result, "hbp/core/schematest/v0.0.6/"+uuid)
+        result = self.repository.read(self.default_prefix, "core", "schematest", "v0.0.1", uuid)
+        self._assert_valid_default_entity(result, "hbp/core/schematest/v0.0.1/"+uuid)
 
     def test_read_revision_one(self):
         uuid = self._get_instance_uuid()
-        result = self.repository.read(self.default_prefix, "core", "schematest", "v0.0.6", uuid, 1)
-        self._assert_valid_default_entity(result, "hbp/core/schematest/v0.0.6/"+uuid)
+        result = self.repository.read(self.default_prefix, "core", "schematest", "v0.0.1", uuid, 1)
+        self._assert_valid_default_entity(result, "hbp/core/schematest/v0.0.1/"+uuid)
         assert_that(result.get_revision(), equal_to(1))
 
     def test_read_unknown(self):
-        result = self.repository.read("acme_corp", "core", "schematest", "v0.0.6", "something")
+        result = self.repository.read("acme_corp", "core", "schematest", "v0.0.1", "something")
         assert_that(result, none())
 
 #   ATTENTION: This test creates entities. The execution of the test therefore increases data volume
     def test_create_and_deprecate(self):
-        entity = Instance.create_new(self.default_prefix, "core", "schematest", "v0.0.6", self.test_instance)
+        entity = Instance.create_new(self.default_prefix, "core", "schematest", "v0.0.1", self.test_instance)
         result = self.repository.create(entity)
         assert_that(result, equal_to(entity))
         self._assert_valid_default_entity(result, entity.id)
@@ -73,7 +73,7 @@ class TestInstanceRepository(TestCase):
         assert_that(result.get_revision(), equal_to(2))
 
     def test_update(self):
-        entity = self.repository.read(self.default_prefix, "core", "schematest", "v0.0.6", self._get_instance_uuid())
+        entity = self.repository.read(self.default_prefix, "core", "schematest", "v0.0.1", self._get_instance_uuid())
         entity.data["description"] = "New description"
         entity = self.repository.update(entity)
         assert_that(entity.get_data("description"), not_none())
@@ -126,3 +126,7 @@ class TestInstanceRepository(TestCase):
       }],
       "@type": "hbp:SchemaTestEntity"
     }
+
+    def test_find_by_field(self):
+        search = self.repository.find_by_field("/shape/core/activity/v0.0.1", "http://schema.org/identifier", "NCRMI_210")
+        print search

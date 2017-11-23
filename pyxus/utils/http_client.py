@@ -1,4 +1,6 @@
 import logging
+from requests.exceptions import HTTPError
+
 import requests
 import json
 
@@ -43,7 +45,12 @@ class HttpClient(object):
         headers.update(JSON_CONTENT)
         LOGGER.debug('request:%s %s\n%r', method_name, full_url, data)
         response = method(full_url, data, headers=headers)
-        return self._handle_response(response)
+        try:
+            print "SUCCESS {}: {} {}".format(method_name.upper(), full_url, json.dumps(data))
+            return self._handle_response(response)
+        except HTTPError as e:
+            print "ERROR {} ({}): {} {} {}".format(method_name.upper(), e.response.status_code, full_url, json.dumps(data), e.response.content)
+            raise(e)
 
     @staticmethod
     def _direct_request(method_name, full_url, data=None, headers=None):

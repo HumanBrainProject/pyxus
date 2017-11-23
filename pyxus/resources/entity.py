@@ -6,7 +6,6 @@ class Entity(object):
     def __init__(self, identifier, data, root_path):
         self.id = identifier
         self.data = data
-        self.qualified_data = self._fully_qualify(self.data)
         self.root_path = root_path
         self.path = None
         self.build_path()
@@ -15,7 +14,7 @@ class Entity(object):
         self.path = "{}/{}".format(self.root_path, self.id)
 
     @staticmethod
-    def _fully_qualify(data):
+    def fully_qualify(data):
         data = jsonld.expand(data)
         data = jsonld.compact(data, {})
         return data
@@ -47,7 +46,7 @@ class Entity(object):
         return simple
 
     def get_revision(self):
-        return self.data["rev"]
+        return self.data["rev"] if "rev" in self.data else None
 
     def __str__(self):
         return "{classname}: id={id}, path={path}, revision={revision}\ndata={data}".format(
@@ -69,6 +68,8 @@ class Entity(object):
             return result
         raise ValueError("\"{url}\" is not applicable to {root_path}!".format(url=url, root_path=root_path))
 
+    def is_deprecated(self):
+        return self.data.get("deprecated")!=False
 
 class Organization(Entity):
 
@@ -129,6 +130,22 @@ class Instance(Entity):
     def create_new(cls, organization, domain, schema, version, content):
         identifier = Instance.create_id(organization, domain, schema, version)
         return Instance(identifier, content, Instance.path)
+
+
+class Context(Entity):
+    path = "/contexts"
+
+    @staticmethod
+    def create_id(organization, domain, context, version):
+        return "{}/{}/{}/{}".format(organization, domain, context, version)
+
+    @classmethod
+    def create_new(cls, organization, domain, context, version, content):
+        identifier = Context.create_id(organization, domain, context, version)
+        return Context(identifier, content, Context.path)
+
+    def is_published(self):
+        return self.data["published"] if "published" in self.data else False
 
 
 class SearchResultList(object):

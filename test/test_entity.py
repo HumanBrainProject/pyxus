@@ -42,6 +42,6 @@ class TestEntity(TestCase):
             ],
             "hbp:contributors": "Homer Simpson"
         }
-        qualified_data  = Entity._fully_qualify(data)
+        qualified_data  = Entity.fully_qualify(data)
         expected_data = {'http://localhost:8080/vocab/hbp/core/celloptimization/contributors': 'Homer Simpson'}
         assert_that(qualified_data, equal_to(expected_data))

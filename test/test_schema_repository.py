@@ -84,7 +84,7 @@ class TestSchemaRepository(TestCase):
         assert_that(result.is_published(), equal_to(True))
 
     def test_update(self):
-        entity = self.repository.read(self.default_prefix, "core", "testschema", "v0.0.2")
+        entity = self.repository.read(self.default_prefix, "core", "testschema", "v0.0.1")
         entity.data["description"] = "New description"
         entity = self.repository.update(entity)
         assert_that(entity.get_data("description"), not_none())
@@ -138,9 +138,9 @@ class TestSchemaRepository(TestCase):
             self.repository.publish(schema, True)
 
     def _create_testschema_v2(self):
-        schema = self.repository.read("hbp", "core", "testschema", "v0.0.2")
+        schema = self.repository.read("hbp", "core", "testschema", "v0.0.1")
         if schema is None:
-            self.repository.create(Schema.create_new("hbp", "core", "testschema", "v0.0.2", self.test_schema))
+            self.repository.create(Schema.create_new("hbp", "core", "testschema", "v0.0.1", self.test_schema))
 
     test_schema = {
         "@id": "http://nexus.example.com/v0/schemas/hbp/core/testschema/v0.0.1",
@@ -202,18 +202,18 @@ class TestSchemaRepository(TestCase):
                 "@type": "@id"
             },
             "schema": "http://schema.org/",
-            "this": "http://nexus.example.com/v0/vocab/hbp/core/testschema/v0.0.1/shapes/",
+            "this": "http://nexus.example.com/v0/vocab/hbp/core/testschema/v0.0.1/shape/",
             "hbp": "http://nexus.example.com/v0/vocab/hbp/core/testschema/",
             "sh": "http://www.w3.org/ns/shacl#",
             "owl": "http://www.w3.org/2002/07/owl#",
             "xsd": "http://www.w3.org/2001/XMLSchema#",
             "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-            "shapes": {
+            "shape": {
                 "@reverse": "rdfs:isDefinedBy",
                 "@type": "@id"
             }
         },
-        "shapes": [
+        "shape": [
             {
                 "@id": "hbp:SchemaTestShape",
                 "@type": "sh:NodeShape",
