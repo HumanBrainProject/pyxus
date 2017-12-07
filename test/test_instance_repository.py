@@ -40,7 +40,7 @@ class TestInstanceRepository(TestCase):
 
     def setUp(self):
         logging.basicConfig(level=logging.DEBUG)
-        self.repository = InstanceRepository(HttpClient(conf.NEXUS_ENV_LOCALHOST))
+        self.repository = InstanceRepository(HttpClient(conf.NEXUS_ENV_HBP_DEV))
 
     def test_read_latest_revision(self):
         uuid = self._get_instance_uuid()
@@ -117,6 +117,11 @@ class TestInstanceRepository(TestCase):
         assert_that(result, instance_of(list))
         assert_that(len(result), greater_than(0))
         self._assert_valid_default_entity(result[0], result[0].id)
+
+    def test_list_resolved(self):
+        search = self.repository.list(resolved=True)
+        self._assert_valid_search_list_result(search)
+        assert_that(len(search.results), greater_than(0))
 
     test_instance = {
       "hbp:hello_world": "Test",

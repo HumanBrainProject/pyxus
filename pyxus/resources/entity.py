@@ -1,3 +1,5 @@
+import hashlib
+import json
 import re
 from pyld import jsonld
 
@@ -18,6 +20,9 @@ class Entity(object):
         data = jsonld.expand(data)
         data = jsonld.compact(data, {})
         return data
+
+    def get_checksum(self):
+        return hashlib.md5(json.dumps(self.data).encode("utf-8")).hexdigest()
 
     def get_simplified_data(self):
         return self._get_simplified_data(self.data)
@@ -70,6 +75,12 @@ class Entity(object):
 
     def is_deprecated(self):
         return self.data.get("deprecated")!=False
+
+
+    def get_identifier(self):
+        if "http://schema.org/identifier" in self.data:
+            return self.data.get("http://schema.org/identifier")
+        return None
 
 class Organization(Entity):
 
@@ -131,7 +142,6 @@ class Instance(Entity):
         identifier = Instance.create_id(organization, domain, schema, version)
         return Instance(identifier, content, Instance.path)
 
-
 class Context(Entity):
     path = "/contexts"
 
@@ -150,9 +160,10 @@ class Context(Entity):
 
 class SearchResultList(object):
 
-    def __init__(self, total, results):
+    def __init__(self, total, results, links):
         self.total = total
         self.results = results
+        self.links = links
 
     def __str__(self):
         return "{classname}: total={total}, first_entry=({first_entry})".format(
@@ -160,6 +171,19 @@ class SearchResultList(object):
             total=self.total,
             first_entry=self.results[0] if self.results is not None and len(self.results) > 0 else "no results"
         )
+
+    def get_next_link(self):
+        for link in self.links:
+            if "rel" in link and link.get("rel")=="next":
+                return link["href"]
+        return None
+
+
+    def get_previous_link(self):
+        for link in self.links:
+            if "rel" in link and link.get("rel") == "previous":
+                return link["href"]
+        return None
 
 
 class SearchResult(object):

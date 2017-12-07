@@ -6,13 +6,13 @@ import json
 
 LOGGER = logging.getLogger(__name__)
 
-JSON_CONTENT = {"Content-type": "application/json"}
-
-
 class HttpClient(object):
 
-    def __init__(self, api_root_dict):
+    headers = {"Content-type": "application/json"}
+
+    def __init__(self, api_root_dict, raw=False):
         self.api_root_dict = api_root_dict
+        self.raw = raw
         self.api_root = '{scheme}://{host}/{prefix}'.format(**self.api_root_dict)
 
     def _create_full_url(self, endpoint_url):
@@ -25,25 +25,25 @@ class HttpClient(object):
             )
         return full_url
 
-    @staticmethod
-    def _handle_response(response):
-        LOGGER.debug('returned %s %s', response.status_code, response.content)
+    def _handle_response(self, response):
         if response.status_code == 404:
             return None
         elif response.status_code < 300:
-            return response.json()
+            if self.raw:
+                return response
+            else:
+                return response.json()
         else:
+            LOGGER.debug('returned %s %s', response.status_code, response.content)
             return response.raise_for_status()
 
     def _request(self, method_name, endpoint_url, data=None, headers=None):
-        LOGGER.debug('%s %s\n%r', method_name, endpoint_url, data)
         method = getattr(requests, method_name)
         full_url = self._create_full_url(endpoint_url)
         if type(data) is dict:
             data = json.dumps(data)
         headers = headers or {}
-        headers.update(JSON_CONTENT)
-        LOGGER.debug('request:%s %s\n%r', method_name, full_url, data)
+        headers.update(self.headers)
         response = method(full_url, data, headers=headers)
         try:
             if response.status_code>=500:
@@ -53,6 +53,7 @@ class HttpClient(object):
             print "SUCCESS {}: {} {}".format(method_name.upper(), full_url, json.dumps(data))
             return self._handle_response(response)
         except HTTPError as e:
+            LOGGER.debug('request:%s %s\n%r', method_name, full_url, data)
             print "ERROR {} ({}): {} {} {}".format(method_name.upper(), e.response.status_code, full_url, json.dumps(data), e.response.content)
             raise(e)
 
@@ -61,7 +62,7 @@ class HttpClient(object):
         LOGGER.debug('%s %s\n%r', method_name, full_url, data)
         method = getattr(requests, method_name)
         headers = headers or {}
-        headers.update(JSON_CONTENT)
+        headers.update(headers)
         LOGGER.debug('request:%s %s\n%r', method_name, full_url, data)
         response = method(full_url, str(data), headers=headers)
         LOGGER.debug('returned %s', response.status_code)

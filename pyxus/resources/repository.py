@@ -6,9 +6,10 @@ from pyxus.resources.entity import Organization, Domain, Schema, Instance, Conte
 
 class Repository(object):
 
-    def __init__(self, path, http_client):
-        self.path = path
+    def __init__(self, http_client, constructor):
+        self.path = constructor.path
         self._http_client = http_client
+        self.constructor = constructor
 
     def create(self, entity):
         result = self._http_client.put(entity.path, entity.data)
@@ -49,16 +50,29 @@ class Repository(object):
         #         return None
         #     raise e
 
-    def list_by_full_subpath(self, subpath):
-        path = "{path}{subpath}".format(path=self.path, subpath=subpath or '')
+    def _wrap_with_entity(self, search_result):
+        identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
+        return self.constructor(identifier, search_result.data["source"], self.path) if type(search_result.data) is dict and "source" in search_result.data else None
+
+    def list_by_full_subpath(self, subpath, resolved=False):
+        if resolved:
+            path = "{path}{subpath}&fields=all".format(path=self.path, subpath=subpath or '')
+        else:
+            path = "{path}{subpath}".format(path=self.path, subpath=subpath or '')
+        return self.list_by_full_path(path)
+
+    def list_by_full_path(self, path):
         path = path.decode("string_escape")
+        resolved = "fields=all" in path
         result = self._http_client.get(path)
         if result is not None:
             results = [SearchResult(r) for r in result["results"]]
-            return SearchResultList(result["total"], results)
+            if resolved:
+                results = [self._wrap_with_entity(r) for r in results]
+            return SearchResultList(result["total"], results, result["links"])
         return None
 
-    def list(self, subpath=None, full_text_query=None, filter_query=None, from_index=None, size=None, deprecated=False):
+    def list(self, resolved=False, subpath=None, full_text_query=None, filter_query=None, from_index=None, size=None, deprecated=False):
         subpath = "{subpath}/?{full_text_search_query}&{filter}&{from_index}&{size}&{deprecated}".format(
             path=self.path,
             subpath=subpath or '',
@@ -68,7 +82,8 @@ class Repository(object):
             size="size={}".format(size) if size is not None else '',
             deprecated="deprecated={}".format(deprecated) if deprecated is not None else ''
         )
-        return self.list_by_full_subpath(subpath)
+        return self.list_by_full_subpath(subpath, resolved)
+
 
     def _get_last_revision(self, identifier):
         current_revision = self._read(identifier)
@@ -89,7 +104,7 @@ class Repository(object):
         result = self._http_client.get(path)
         if result is not None:
             results = [SearchResult(r) for r in result["results"]]
-            return SearchResultList(result["total"], results)
+            return SearchResultList(result["total"], results, result["links"])
         return None
 
 
@@ -102,7 +117,7 @@ class Repository(object):
 class OrganizationRepository(Repository):
 
     def __init__(self, http_client):
-        super(OrganizationRepository, self).__init__(Organization.path, http_client)
+        super(OrganizationRepository, self).__init__(http_client, Organization)
 
     def read(self, name, revision=None):
         data = self._read(name, revision)
@@ -117,7 +132,7 @@ class OrganizationRepository(Repository):
 class DomainRepository(Repository):
 
     def __init__(self, http_client):
-        super(DomainRepository, self).__init__(Domain.path, http_client)
+        super(DomainRepository, self).__init__(http_client, Domain)
 
     def read(self, organization, domain, revision=None):
         identifier = Domain.create_id(organization, domain)
@@ -133,7 +148,7 @@ class DomainRepository(Repository):
 class SchemaRepository(Repository):
 
     def __init__(self, http_client):
-        super(SchemaRepository, self).__init__(Schema.path, http_client)
+        super(SchemaRepository, self).__init__(http_client, Schema)
 
     def read(self, organization, domain, schema, version, revision=None):
         identifier = Schema.create_id(organization, domain, schema, version)
@@ -161,7 +176,7 @@ class SchemaRepository(Repository):
 class InstanceRepository(Repository):
 
     def __init__(self, http_client):
-        super(InstanceRepository, self).__init__(Instance.path, http_client)
+        super(InstanceRepository, self).__init__(http_client, Instance)
 
     def create(self, entity):
         result = self._http_client.post(entity.path, entity.data)
@@ -196,7 +211,7 @@ class InstanceRepository(Repository):
 class ContextRepository(Repository):
 
     def __init__(self, http_client):
-        super(ContextRepository, self).__init__(Context.path, http_client)
+        super(ContextRepository, self).__init__(http_client, Context)
 
     def read(self, organization, domain, context, version, revision=None):
         identifier = Context.create_id(organization, domain, context, version)
