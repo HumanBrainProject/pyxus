@@ -40,6 +40,7 @@ class DataUploadUtils(object):
         """Create a new schema or context or revise an existing.
 
         Arguments:
+        creation_function -- the function to create the structure (either for context or schema)
         file_path -- path to the location of the schema/context
         force_domain_creation -- if the organization and domain declared as part of the schema/context shall be created automatically
         update_if_already_exists -- if an already existing schema/context shall be updated.
@@ -53,28 +54,31 @@ class DataUploadUtils(object):
             schema_data = SchemaOrContextData.by_filepath(file_path, content)
             return creation_function(schema_data, force_domain_creation, update_if_already_exists, publish)
 
-    def create_instance_by_file(self, meta_data_file_path, force_domain_creation=False, update_if_already_exists=False, publish=False):
+    def create_instance_by_file(self, file_path, fully_qualify=True):
         """Create a new instance for the provided data
 
         Arguments:
-        converter -- the converter of the meta data file  to the target schema
-        meta_data_file_path -- path to the location of the metadata_file
-           """
-        with open(os.path.abspath(meta_data_file_path)) as metadata_file:
+            file_path -- path to the location of the file to be uploaded as instance
+            fully_qualify -- if True, prefixes are resolved and the JSON-LD to be uploaded will be interpretable as JSON (but with non-human-friendly, fully qualified keys)
+        """
+        with open(os.path.abspath(file_path)) as metadata_file:
             file_content = metadata_file.read()
             raw_json = self.__resolve_entities(file_content)
             raw_json = self.__fill_placeholders(raw_json)
-            final_json = Entity.fully_qualify(json.loads(raw_json))
-            schema_data = SchemaOrContextData.by_filepath(meta_data_file_path, final_json)
+            if fully_qualify:
+                final_json = Entity.fully_qualify(json.loads(raw_json))
+            else:
+                final_json = raw_json
+            schema_data = SchemaOrContextData.by_filepath(file_path, final_json)
             schema_identifier = "http://schema.org/identifier"
             if self._upload_fully_qualified:
                 raw_json = final_json
             instance = Instance.create_new(schema_data.organization, schema_data.domain, schema_data.name, schema_data.version, raw_json)
             if schema_identifier in final_json:
                 checksum = instance.get_checksum()
-                checksum_file = "{}.{}.chksum".format(meta_data_file_path, checksum)
+                checksum_file = "{}.{}.chksum".format(file_path, checksum)
                 if os.path.exists(checksum_file):
-                    print "{} is unchanged - no upload required".format(meta_data_file_path)
+                    print "{} is unchanged - no upload required".format(file_path)
                     return
                 found_instances = self._client.instances.find_by_field(instance.id, schema_identifier, final_json.get(schema_identifier))
                 if found_instances and len(found_instances.results)>0:

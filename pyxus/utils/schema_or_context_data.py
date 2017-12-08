@@ -19,7 +19,6 @@ class SchemaOrContextData(object):
 
     @classmethod
     def by_filepath(cls, filepath, content):
-        filename = os.path.basename(filepath)
         dirname = os.path.dirname(filepath)
         split = os.path.split(dirname)
         try:

@@ -6,7 +6,7 @@ reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
     name='pyxus',
-    version='0.0.1',
+    version='0.0.2',
     packages=['pyxus', 'pyxus.resources', 'pyxus.utils'],
     install_requires = reqs
 )
