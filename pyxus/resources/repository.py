@@ -1,14 +1,15 @@
 from abc import abstractmethod
 import re
 
-from pyxus.resources.entity import Organization, Domain, Schema, Instance, Entity, SearchResult, SearchResultList
+from pyxus.resources.entity import Organization, Domain, Schema, Instance, Context, Entity, SearchResult, SearchResultList
 
 
 class Repository(object):
 
-    def __init__(self, path, http_client):
-        self.path = path
+    def __init__(self, http_client, constructor):
+        self.path = constructor.path
         self._http_client = http_client
+        self.constructor = constructor
 
     def create(self, entity):
         result = self._http_client.put(entity.path, entity.data)
@@ -16,7 +17,10 @@ class Repository(object):
         return entity
 
     def update(self, entity):
-        path = "{}?rev={}".format(entity.path, entity.get_revision())
+        revision = entity.get_revision()
+        if revision is None:
+            revision = self._get_last_revision(entity.id)
+        path = "{}?rev={}".format(entity.path, revision)
         result = self._http_client.put(path, entity.data)
         if result is not None:
             new_revision = result["rev"]
@@ -26,11 +30,12 @@ class Repository(object):
     def delete(self, entity, revision=None):
         if revision is None:
             revision = self._get_last_revision(entity.id)
-        path = "{}?rev={}".format(entity.path, revision)
-        result = self._http_client.delete(path)
-        if result is not None:
-            new_revision = result["rev"]
-            entity.data = self._read(entity.id, new_revision)
+        if not entity.is_deprecated():
+            path = "{}?rev={}".format(entity.path, revision)
+            result = self._http_client.delete(path)
+            if result is not None:
+                new_revision = result["rev"]
+                entity.data = self._read(entity.id, new_revision)
         return entity
 
     def _read(self, identifier, revision=None):
@@ -38,10 +43,37 @@ class Repository(object):
             path = "{}/{}".format(self.path, identifier)
         else:
             path = "{}/{}?rev={}".format(self.path, identifier, revision)
+        # try:
         return self._http_client.get(path)
+        # except HTTPError as e:
+        #     if e.response.status_code==401:
+        #         return None
+        #     raise e
 
-    def list(self, subpath=None, full_text_query=None, filter_query=None, from_index=None, size=None, deprecated=False):
-        path = "{path}{subpath}/?{full_text_search_query}&{filter}&{from_index}&{size}&{deprecated}".format(
+    def _wrap_with_entity(self, search_result):
+        identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
+        return self.constructor(identifier, search_result.data["source"], self.path) if type(search_result.data) is dict and "source" in search_result.data else None
+
+    def list_by_full_subpath(self, subpath, resolved=False):
+        if resolved:
+            path = "{path}{subpath}&fields=all".format(path=self.path, subpath=subpath or '')
+        else:
+            path = "{path}{subpath}".format(path=self.path, subpath=subpath or '')
+        return self.list_by_full_path(path)
+
+    def list_by_full_path(self, path):
+        path = path.decode("string_escape")
+        resolved = "fields=all" in path
+        result = self._http_client.get(path)
+        if result is not None:
+            results = [SearchResult(r) for r in result["results"]]
+            if resolved:
+                results = [self._wrap_with_entity(r) for r in results]
+            return SearchResultList(result["total"], results, result["links"])
+        return None
+
+    def list(self, resolved=False, subpath=None, full_text_query=None, filter_query=None, from_index=None, size=None, deprecated=False):
+        subpath = "{subpath}/?{full_text_search_query}&{filter}&{from_index}&{size}&{deprecated}".format(
             path=self.path,
             subpath=subpath or '',
             full_text_search_query="q={}".format(full_text_query) if full_text_query is not None else '',
@@ -50,11 +82,8 @@ class Repository(object):
             size="size={}".format(size) if size is not None else '',
             deprecated="deprecated={}".format(deprecated) if deprecated is not None else ''
         )
-        result = self._http_client.get(path)
-        if result is not None:
-            results = [SearchResult(r) for r in result["results"]]
-            return SearchResultList(result["total"], results)
-        return None
+        return self.list_by_full_subpath(subpath, resolved)
+
 
     def _get_last_revision(self, identifier):
         current_revision = self._read(identifier)
@@ -62,6 +91,23 @@ class Repository(object):
 
     def resolve_all(self, search_result_list):
         return [self.resolve(search_result) for search_result in search_result_list.results]
+
+    def find_by_field(self, subpath, field_path, value):
+        if not subpath.startswith('/'):
+            subpath = u"/{}".format(subpath)
+        path = "{path}{subpath}/?&filter={{\"filter\":{{\"op\":\"eq\",\"path\":\"{field_path}\",\"value\":{value}}}}}".format(
+            path=self.path,
+            subpath = subpath,
+            field_path=field_path,
+            value=u"\"{}\"".format(value) if type(value) is str or type(value) is unicode else value
+        )
+        result = self._http_client.get(path)
+        if result is not None:
+            results = [SearchResult(r) for r in result["results"]]
+            return SearchResultList(result["total"], results, result["links"])
+        return None
+
+
 
     @abstractmethod
     def resolve(self, search_result):
@@ -71,7 +117,7 @@ class Repository(object):
 class OrganizationRepository(Repository):
 
     def __init__(self, http_client):
-        super(OrganizationRepository, self).__init__(Organization.path, http_client)
+        super(OrganizationRepository, self).__init__(http_client, Organization)
 
     def read(self, name, revision=None):
         data = self._read(name, revision)
@@ -86,7 +132,7 @@ class OrganizationRepository(Repository):
 class DomainRepository(Repository):
 
     def __init__(self, http_client):
-        super(DomainRepository, self).__init__(Domain.path, http_client)
+        super(DomainRepository, self).__init__(http_client, Domain)
 
     def read(self, organization, domain, revision=None):
         identifier = Domain.create_id(organization, domain)
@@ -102,7 +148,7 @@ class DomainRepository(Repository):
 class SchemaRepository(Repository):
 
     def __init__(self, http_client):
-        super(SchemaRepository, self).__init__(Schema.path, http_client)
+        super(SchemaRepository, self).__init__(http_client, Schema)
 
     def read(self, organization, domain, schema, version, revision=None):
         identifier = Schema.create_id(organization, domain, schema, version)
@@ -130,7 +176,7 @@ class SchemaRepository(Repository):
 class InstanceRepository(Repository):
 
     def __init__(self, http_client):
-        super(InstanceRepository, self).__init__(Instance.path, http_client)
+        super(InstanceRepository, self).__init__(http_client, Instance)
 
     def create(self, entity):
         result = self._http_client.post(entity.path, entity.data)
@@ -160,3 +206,32 @@ class InstanceRepository(Repository):
         identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
         data = self._read(identifier)
         return Instance(identifier, data, self.path) if data is not None else None
+
+
+class ContextRepository(Repository):
+
+    def __init__(self, http_client):
+        super(ContextRepository, self).__init__(http_client, Context)
+
+    def read(self, organization, domain, context, version, revision=None):
+        identifier = Context.create_id(organization, domain, context, version)
+        data = self._read(identifier, revision)
+        return Context(identifier, data, self.path) if data is not None else None
+
+    def publish(self, entity, publish, revision=None):
+        if revision is None:
+            revision = self._get_last_revision(entity.id)
+        path = "{}/config?rev={}".format(entity.path, revision)
+        result = self._http_client.patch(path, {
+            'published': publish
+        })
+        if result is not None:
+            new_revision = result["rev"]
+            entity.data = self._read(entity.id, new_revision)
+        return entity
+
+    def resolve(self, search_result):
+        identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
+        data = self._read(identifier)
+        return Context(identifier, data, self.path) if data is not None else None
+

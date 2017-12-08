@@ -1,7 +1,6 @@
-import json
 import logging
 
-from pyxus.resources.repository import DomainRepository, OrganizationRepository, InstanceRepository, SchemaRepository
+from pyxus.resources.repository import DomainRepository, OrganizationRepository, InstanceRepository, SchemaRepository, ContextRepository
 from pyxus.utils.http_client import HttpClient
 
 LOGGER = logging.getLogger(__name__)
@@ -21,6 +20,7 @@ class NexusClient(object):
         self.env = None
         self._http_client = HttpClient(self.api_root_dict)
         self.domains = DomainRepository(self._http_client)
+        self.contexts = ContextRepository(self._http_client)
         self.organizations = OrganizationRepository(self._http_client)
         self.instances = InstanceRepository(self._http_client)
         self.schemas = SchemaRepository(self._http_client)

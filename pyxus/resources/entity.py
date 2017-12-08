@@ -1,5 +1,7 @@
+import hashlib
+import json
 import re
-
+from pyld import jsonld
 
 class Entity(object):
 
@@ -12,6 +14,15 @@ class Entity(object):
 
     def build_path(self):
         self.path = "{}/{}".format(self.root_path, self.id)
+
+    @staticmethod
+    def fully_qualify(data):
+        data = jsonld.expand(data)
+        data = jsonld.compact(data, {})
+        return data
+
+    def get_checksum(self):
+        return hashlib.md5(json.dumps(self.data).encode("utf-8")).hexdigest()
 
     def get_simplified_data(self):
         return self._get_simplified_data(self.data)
@@ -40,7 +51,7 @@ class Entity(object):
         return simple
 
     def get_revision(self):
-        return self.data["rev"]
+        return self.data["rev"] if "rev" in self.data else None
 
     def __str__(self):
         return "{classname}: id={id}, path={path}, revision={revision}\ndata={data}".format(
@@ -62,6 +73,14 @@ class Entity(object):
             return result
         raise ValueError("\"{url}\" is not applicable to {root_path}!".format(url=url, root_path=root_path))
 
+    def is_deprecated(self):
+        return self.data.get("deprecated")!=False
+
+
+    def get_identifier(self):
+        if "http://schema.org/identifier" in self.data:
+            return self.data.get("http://schema.org/identifier")
+        return None
 
 class Organization(Entity):
 
@@ -123,12 +142,28 @@ class Instance(Entity):
         identifier = Instance.create_id(organization, domain, schema, version)
         return Instance(identifier, content, Instance.path)
 
+class Context(Entity):
+    path = "/contexts"
+
+    @staticmethod
+    def create_id(organization, domain, context, version):
+        return "{}/{}/{}/{}".format(organization, domain, context, version)
+
+    @classmethod
+    def create_new(cls, organization, domain, context, version, content):
+        identifier = Context.create_id(organization, domain, context, version)
+        return Context(identifier, content, Context.path)
+
+    def is_published(self):
+        return self.data["published"] if "published" in self.data else False
+
 
 class SearchResultList(object):
 
-    def __init__(self, total, results):
+    def __init__(self, total, results, links):
         self.total = total
         self.results = results
+        self.links = links
 
     def __str__(self):
         return "{classname}: total={total}, first_entry=({first_entry})".format(
@@ -136,6 +171,19 @@ class SearchResultList(object):
             total=self.total,
             first_entry=self.results[0] if self.results is not None and len(self.results) > 0 else "no results"
         )
+
+    def get_next_link(self):
+        for link in self.links:
+            if "rel" in link and link.get("rel")=="next":
+                return link["href"]
+        return None
+
+
+    def get_previous_link(self):
+        for link in self.links:
+            if "rel" in link and link.get("rel") == "previous":
+                return link["href"]
+        return None
 
 
 class SearchResult(object):
