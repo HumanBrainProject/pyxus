@@ -21,6 +21,9 @@ class Entity(object):
         data = jsonld.compact(data, {})
         return data
 
+    def to_json(self):
+        return json.dumps(self.data, indent=4)
+
     def get_checksum(self):
         return hashlib.md5(json.dumps(self.data).encode("utf-8")).hexdigest()
 
@@ -61,6 +64,24 @@ class Entity(object):
             revision=self.get_revision(),
             data=self.data
         )
+
+    extract_info = r"(?P<org>.*)/(?P<domain>.*)/(?P<schema>.*)/(?P<version>.*)/(?P<id>.*)"
+
+
+    def get_organization(self):
+        return re.match(r"(?P<org>.*?)(/.*)?$", self.id).group("org")
+
+    def get_domain(self):
+        return re.match(r".*?/(?P<domain>.*?)(/.*)?$", self.id).group("domain")
+
+    def get_schema(self):
+        return re.match(r".*?/.*?/(?P<schema>.*?)(/.*)?$", self.id).group("schema")
+
+    def get_version(self):
+        return re.match(r".*?/.*?/.*?/(?P<version>.*?)(/.*)?$",self.id).group("version")
+
+    def get_id(self):
+        return re.match(r".*?/.*?/.*?/.*?/(?P<id>.*?)(/.*)?$", self.id).group("id")
 
     @staticmethod
     def extract_id_from_url(url, root_path):

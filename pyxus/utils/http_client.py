@@ -25,6 +25,11 @@ class HttpClient(object):
             )
         return full_url
 
+    def transform_url_to_defined_endpoint(self, provided_by_nexus):
+        key_to_find = self.api_root_dict["prefix"]
+        provided_by_nexus = provided_by_nexus[provided_by_nexus.find(key_to_find)+len(key_to_find):]
+        return self._create_full_url(provided_by_nexus)
+
     def _handle_response(self, response):
         if response.status_code == 404:
             return None
@@ -38,6 +43,8 @@ class HttpClient(object):
             return response.raise_for_status()
 
     def _request(self, method_name, endpoint_url, data=None, headers=None):
+        if endpoint_url.startswith('http'):
+           endpoint_url = self.transform_url_to_defined_endpoint(endpoint_url)
         method = getattr(requests, method_name)
         full_url = self._create_full_url(endpoint_url)
         if type(data) is dict:

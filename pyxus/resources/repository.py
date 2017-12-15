@@ -180,6 +180,8 @@ class InstanceRepository(Repository):
 
     def create(self, entity):
         result = self._http_client.post(entity.path, entity.data)
+        if result is None:
+            raise ValueError("Entity was not created")
         entity.data = result
         entity.id = Instance.extract_id_from_url(result.get("@id"), self.path)
         entity.build_path()
