@@ -92,18 +92,23 @@ class Repository(object):
     def resolve_all(self, search_result_list):
         return [self.resolve(search_result) for search_result in search_result_list.results]
 
-    def find_by_field(self, subpath, field_path, value):
+    def find_by_field(self, subpath, field_path, value, resolved=False, deprecated=False):
         if not subpath.startswith('/'):
             subpath = u"/{}".format(subpath)
-        path = "{path}{subpath}/?&filter={{\"filter\":{{\"op\":\"eq\",\"path\":\"{field_path}\",\"value\":{value}}}}}".format(
+        path = "{path}{subpath}/?&filter={{\"filter\":{{\"op\":\"eq\",\"path\":\"{field_path}\",\"value\":{value}}}}}&{deprecated}".format(
             path=self.path,
             subpath = subpath,
             field_path=field_path,
+            deprecated="deprecated={}".format(deprecated) if deprecated is not None else '',
             value=u"\"{}\"".format(value) if type(value) is str or type(value) is unicode else value
         )
+        if resolved:
+            path += "&fields=all"
         result = self._http_client.get(path)
         if result is not None:
             results = [SearchResult(r) for r in result["results"]]
+            if resolved:
+                results = [self._wrap_with_entity(r) for r in results]
             return SearchResultList(result["total"], results, result["links"])
         return None
 

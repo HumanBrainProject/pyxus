@@ -100,12 +100,22 @@ class DataUploadUtils(object):
     def __resolve_entities(self, template):
         matches = re.findall("(?<=\{\{resolve ).*(?=\}\})", template)
         for match in matches:
-            result_list = self._client.instances.list_by_full_subpath(match)
+            result_list = self._client.instances.list_by_full_subpath(match+"&deprecated=false")
             if len(result_list.results) > 0:
                 #TODO check - do we really want to select the first one if ambiguous?
                 template = template.replace("\"{{resolve "+match+"}}\"", "{{ \"@id\": \"{}\"}}".format(result_list.results[0].result_id))
             else:
                 raise ValueError("No entities found for "+match)
+
+        matches = re.findall("(?<=\{\{resolve_id ).*(?=\}\})", template)
+        for match in matches:
+            result_list = self._client.instances.list_by_full_subpath(match+"&deprecated=false")
+            if len(result_list.results) > 0:
+                # TODO check - do we really want to select the first one if ambiguous?
+                template = template.replace("{{resolve_id " + match + "}}", result_list.results[0].result_id)
+            else:
+                raise ValueError("No entities found for " + match)
+
         return template
 
     def clear_all_checksums(self, path):

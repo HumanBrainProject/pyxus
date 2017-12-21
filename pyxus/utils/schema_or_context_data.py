@@ -44,7 +44,7 @@ class SchemaOrContextData(object):
 
     @staticmethod
     def _normalize_identifier(identifier):
-        return identifier.translate(None, "/-#")
+        return re.sub('[/#]', '', identifier)
 
 
     def __eq__(self, other):
