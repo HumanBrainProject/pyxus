@@ -29,6 +29,7 @@ class DataUploadUtils(object):
     def __init__(self, client=NexusClient(), upload_fully_qualified=True):
         self._client = client
         self._upload_fully_qualified = upload_fully_qualified
+        self._id_cache = {}
 
     def create_schema_by_file(self, file_path, force_domain_creation=False, update_if_already_exists=False, publish=False):
         return self.__create_schema_or_context_by_file(self._create_schema, file_path, force_domain_creation, update_if_already_exists, publish)
@@ -97,25 +98,28 @@ class DataUploadUtils(object):
         template = template.replace(":{{port}}", "")
         return pystache.render(template, self._client.api_root_dict)
 
-    def __resolve_entities(self, template):
-        matches = re.findall("(?<=\{\{resolve ).*(?=\}\})", template)
-        for match in matches:
-            result_list = self._client.instances.list_by_full_subpath(match+"&deprecated=false")
-            if len(result_list.results) > 0:
-                #TODO check - do we really want to select the first one if ambiguous?
-                template = template.replace("\"{{resolve "+match+"}}\"", "{{ \"@id\": \"{}\"}}".format(result_list.results[0].result_id))
-            else:
-                raise ValueError("No entities found for "+match)
 
-        matches = re.findall("(?<=\{\{resolve_id ).*(?=\}\})", template)
-        for match in matches:
-            result_list = self._client.instances.list_by_full_subpath(match+"&deprecated=false")
+    def __resolve_identifier(self, match):
+        if match in self._id_cache:
+            print "resolved {} from cache".format(match)
+            return self._id_cache.get(match)
+        else:
+            result_list = self._client.instances.list_by_full_subpath(match + "&deprecated=false")
             if len(result_list.results) > 0:
                 # TODO check - do we really want to select the first one if ambiguous?
-                template = template.replace("{{resolve_id " + match + "}}", result_list.results[0].result_id)
+                result = result_list.results[0].result_id
+                self._id_cache[match] = result
+                return result
             else:
                 raise ValueError("No entities found for " + match)
 
+    def __resolve_entities(self, template):
+        matches = re.findall("(?<=\{\{resolve ).*(?=\}\})", template)
+        for match in matches:
+            template = template.replace("\"{{resolve "+match+"}}\"", "{{ \"@id\": \"{}\"}}".format(self.__resolve_identifier(match)))
+        matches = re.findall("(?<=\{\{resolve_id ).*(?=\}\})", template)
+        for match in matches:
+            template = template.replace("{{resolve_id " + match + "}}", self.__resolve_identifier(match))
         return template
 
     def clear_all_checksums(self, path):

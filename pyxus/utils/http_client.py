@@ -57,7 +57,10 @@ class HttpClient(object):
                 error = HTTPError()
                 error.response = response
                 raise error
-            print "SUCCESS {}: {} {}".format(method_name.upper(), full_url, json.dumps(data))
+            elif response.status_code>=400:
+                print "ERROR {} {}: {} {}".format(method_name.upper(),response.status_code,  full_url, response)
+            else:
+                print "SUCCESS {} {}: {} {}".format(method_name.upper(), response.status_code, full_url, json.dumps(data))
             return self._handle_response(response)
         except HTTPError as e:
             LOGGER.debug('request:%s %s\n%r', method_name, full_url, data)
