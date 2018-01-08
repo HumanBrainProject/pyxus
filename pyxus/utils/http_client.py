@@ -47,7 +47,7 @@ class HttpClient(object):
            endpoint_url = self.transform_url_to_defined_endpoint(endpoint_url)
         method = getattr(requests, method_name)
         full_url = self._create_full_url(endpoint_url)
-        if type(data) is dict:
+        if type(data) is dict or type(data) is list:
             data = json.dumps(data)
         headers = headers or {}
         headers.update(self.headers)

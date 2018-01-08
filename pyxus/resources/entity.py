@@ -3,6 +3,9 @@ import json
 import re
 from pyld import jsonld
 
+from pyxus.utils.turtle_schema_transformer import transform_turtle_to_jsonld_schema, transform_turtle_to_jsonld
+
+
 class Entity(object):
 
     def __init__(self, identifier, data, root_path):
@@ -143,7 +146,9 @@ class Schema(Entity):
         return "{}/{}/{}/{}".format(organization, domain, schema, version)
 
     @classmethod
-    def create_new(cls, organization, domain, schema, version, content):
+    def create_new(cls, organization, domain, schema, version, content, is_turtle=False):
+        if is_turtle:
+            content = transform_turtle_to_jsonld_schema(content)
         identifier = Schema.create_id(organization, domain, schema, version)
         return Schema(identifier, content, Schema.path)
 
@@ -159,7 +164,13 @@ class Instance(Entity):
         return "{}/{}/{}/{}".format(organization, domain, schema, version)
 
     @classmethod
-    def create_new(cls, organization, domain, schema, version, content):
+    def create_new(cls, organization, domain, schema, version, content, is_turtle=False):
+        if is_turtle:
+            content = transform_turtle_to_jsonld(content)
+            if type(content) is list and len(content)==1:
+                content = content[0]
+            else:
+                raise ValueError("Can't handle multiple instances in same file!")
         identifier = Instance.create_id(organization, domain, schema, version)
         return Instance(identifier, content, Instance.path)
 
