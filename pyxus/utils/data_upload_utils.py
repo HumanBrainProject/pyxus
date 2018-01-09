@@ -81,7 +81,10 @@ class DataUploadUtils(object):
                 if os.path.exists(checksum_file):
                     print "{} is unchanged - no upload required".format(file_path)
                     return
-                found_instances = self._client.instances.find_by_field(instance.id, schema_identifier, final_json.get(schema_identifier))
+                identifier=final_json.get(schema_identifier)
+                if type(identifier) is list:
+                    identifier = identifier[0]
+                found_instances = self._client.instances.find_by_field(instance.id, schema_identifier, identifier)
                 if found_instances and len(found_instances.results)>0:
                     instance.path = found_instances.results[0].self_link
                     instance.id = Instance.extract_id_from_url(instance.path, instance.root_path)
