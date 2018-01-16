@@ -1,6 +1,6 @@
 import fnmatch
-import hashlib
 import json
+import logging
 import os
 import os.path
 import re
@@ -12,6 +12,8 @@ from pyxus.client import NexusClient
 from pyxus.client import NexusException
 from pyxus.resources.entity import Organization, Domain, Instance, Schema, Context, Entity
 from pyxus.utils.schema_or_context_data import SchemaOrContextData
+
+LOGGER = logging.getLogger(__package__)
 
 
 def recursive_find_matching(root_path, pattern):
@@ -79,7 +81,7 @@ class DataUploadUtils(object):
                 checksum = instance.get_checksum()
                 checksum_file = "{}.{}.chksum".format(file_path, checksum)
                 if os.path.exists(checksum_file):
-                    print "{} is unchanged - no upload required".format(file_path)
+                    LOGGER.debug("{} is unchanged - no upload required".format(file_path))
                     return
                 identifier=final_json.get(schema_identifier)
                 if type(identifier) is list:
@@ -104,7 +106,7 @@ class DataUploadUtils(object):
 
     def __resolve_identifier(self, match):
         if match in self._id_cache:
-            print "resolved {} from cache".format(match)
+            LOGGER.debug("resolved {} from cache".format(match))
             return self._id_cache.get(match)
         else:
             result_list = self._client.instances.list_by_full_subpath(match + "&deprecated=false")

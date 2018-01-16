@@ -70,6 +70,8 @@ class Entity(object):
 
     extract_info = r"(?P<org>.*)/(?P<domain>.*)/(?P<schema>.*)/(?P<version>.*)/(?P<id>.*)"
 
+    def get_type(self):
+        return self.data["@type"]
 
     def get_organization(self):
         return re.match(r"(?P<org>.*?)(/.*)?$", self.id).group("org")

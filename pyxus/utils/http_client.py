@@ -1,10 +1,13 @@
 import logging
+
+import curlify
 from requests.exceptions import HTTPError
 
 import requests
 import json
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__package__)
+CURL_LOGGER = logging.getLogger("curl")
 
 class HttpClient(object):
 
@@ -52,19 +55,20 @@ class HttpClient(object):
         headers = headers or {}
         headers.update(self.headers)
         response = method(full_url, data, headers=headers)
+        CURL_LOGGER.info(curlify.to_curl(response.request))
         try:
             if response.status_code>=500:
                 error = HTTPError()
                 error.response = response
                 raise error
             elif response.status_code>=400:
-                print "ERROR {} {}: {} {}".format(method_name.upper(),response.status_code,  full_url, response)
+                LOGGER.error("ERROR {} {}: {} {}".format(method_name.upper(),response.status_code,  full_url, response))
             else:
-                print "SUCCESS {} {}: {} {}".format(method_name.upper(), response.status_code, full_url, json.dumps(data))
+                LOGGER.debug("SUCCESS {} {}: {} {}".format(method_name.upper(), response.status_code, full_url, json.dumps(data)))
             return self._handle_response(response)
         except HTTPError as e:
             LOGGER.debug('request:%s %s\n%r', method_name, full_url, data)
-            print "ERROR {} ({}): {} {} {}".format(method_name.upper(), e.response.status_code, full_url, json.dumps(data), e.response.content)
+            LOGGER.error("ERROR {} ({}): {} {} {}".format(method_name.upper(), e.response.status_code, full_url, json.dumps(data), e.response.content))
             raise(e)
 
     @staticmethod

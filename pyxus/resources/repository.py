@@ -92,6 +92,9 @@ class Repository(object):
     def resolve_all(self, search_result_list):
         return [self.resolve(search_result) for search_result in search_result_list.results]
 
+    def find_by_identifier(self, subpath, value):
+        return self.find_by_field(subpath, "http://schema.org/identifier", value)
+
     def find_by_field(self, subpath, field_path, value, resolved=False, deprecated=False):
         if not subpath.startswith('/'):
             subpath = u"/{}".format(subpath)
@@ -112,7 +115,25 @@ class Repository(object):
             return SearchResultList(result["total"], results, result["links"])
         return None
 
-
+    def fulltext_search(self, value, subpath=None, resolved=False, deprecated=False):
+        if subpath is not None and not subpath.startswith('/'):
+            subpath = u"/{}".format(subpath)
+        else:
+            subpath=""
+        path = "{path}{subpath}/?&q={query}&{deprecated}".format(path=self.path,
+            subpath=subpath,
+            query = value,
+            deprecated="deprecated={}".format(deprecated) if deprecated is not None else ''
+        )
+        if resolved:
+            path += "&fields=all"
+        result = self._http_client.get(path)
+        if result is not None:
+            results = [SearchResult(r) for r in result["results"]]
+            if resolved:
+                results = [self._wrap_with_entity(r) for r in results]
+            return SearchResultList(result["total"], results, result["links"])
+        return None
 
     @abstractmethod
     def resolve(self, search_result):
@@ -213,6 +234,7 @@ class InstanceRepository(Repository):
         identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
         data = self._read(identifier)
         return Instance(identifier, data, self.path) if data is not None else None
+
 
 
 class ContextRepository(Repository):

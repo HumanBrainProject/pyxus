@@ -3,11 +3,9 @@ import logging
 from pyxus.resources.repository import DomainRepository, OrganizationRepository, InstanceRepository, SchemaRepository, ContextRepository
 from pyxus.utils.http_client import HttpClient
 
-LOGGER = logging.getLogger(__name__)
-
+LOGGER = logging.getLogger(__package__)
 
 class NexusClient(object):
-
     SUPPORTED_VERSIONS = ['0.6.2']
 
     def __init__(self, scheme='http', host='localhost:8080', prefix='v0'):
