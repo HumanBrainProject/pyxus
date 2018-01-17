@@ -1,9 +1,11 @@
+import logging
 from abc import abstractmethod
 import re
 
+
 from pyxus.resources.entity import Organization, Domain, Schema, Instance, Context, Entity, SearchResult, SearchResultList
 
-
+LOGGER = logging.getLogger(__package__)
 class Repository(object):
 
     def __init__(self, http_client, constructor):
@@ -12,11 +14,13 @@ class Repository(object):
         self.constructor = constructor
 
     def create(self, entity):
+        logging.debug("Creating entity: {}".format(entity))
         result = self._http_client.put(entity.path, entity.data)
         entity.data = result
         return entity
 
     def update(self, entity):
+        logging.debug("Updating entity: {}".format(entity))
         revision = entity.get_revision()
         if revision is None:
             revision = self._get_last_revision(entity.id)
@@ -28,6 +32,7 @@ class Repository(object):
         return entity
 
     def delete(self, entity, revision=None):
+        logging.debug("Deleting entity: {}".format(entity))
         if revision is None:
             revision = self._get_last_revision(entity.id)
         if not entity.is_deprecated():
