@@ -54,7 +54,7 @@ class HttpClient(object):
             data = json.dumps(data)
         headers = headers or {}
         headers.update(self.headers)
-        response = method(full_url, data, headers=headers)
+        response = method(full_url, data, headers=headers, timeout=30)
         CURL_LOGGER.info(curlify.to_curl(response.request))
         try:
             if response.status_code>=500:
