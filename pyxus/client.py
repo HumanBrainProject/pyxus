@@ -1,33 +1,51 @@
 import logging
+import os
 
+from pyxus import ENV_VAR_BLAZEGRAPH
+from pyxus.config import ENV_VAR_NEXUS_PREFIX, ENV_VAR_NEXUS_NAMESPACE, ENV_VAR_NEXUS_ENDPOINT
 from pyxus.resources.repository import DomainRepository, OrganizationRepository, InstanceRepository, SchemaRepository, ContextRepository
 from pyxus.utils.http_client import HttpClient
-
 LOGGER = logging.getLogger(__package__)
 
 class NexusClient(object):
     SUPPORTED_VERSIONS = ['0.6.2']
 
-    def __init__(self, scheme='http', host='localhost:8080', prefix='v0', alternative_namespace=None):
-        self.api_root_dict = {
-            'scheme': scheme,
-            'host': host,
-            'prefix': prefix
-        }
+    @staticmethod
+    def get_endpoint():
+        return os.environ.get(ENV_VAR_NEXUS_ENDPOINT)
+
+    @staticmethod
+    def get_blazegraph_endpoint():
+        return os.environ.get(ENV_VAR_BLAZEGRAPH)
+
+    @staticmethod
+    def get_prefix():
+        return os.environ.get(ENV_VAR_NEXUS_PREFIX)
+
+    @staticmethod
+    def get_namespace():
+        return os.environ.get(ENV_VAR_NEXUS_NAMESPACE)
+
+    @staticmethod
+    def get_vocab():
+        return "{}/voc".format(NexusClient.get_namespace())
+
+    @staticmethod
+    def get_uuid_predicate():
+        return "{}/nexus/core/uuid".format(NexusClient.get_vocab())
+
+    def __init__(self):
         self.version = None
-        self.namespace = alternative_namespace if alternative_namespace is not None else "{}://{}/{}".format(self.api_root_dict["scheme"], self.api_root_dict["host"],self.api_root_dict["prefix"])
         self.env = None
-        self._http_client = HttpClient(self.api_root_dict)
+        self._http_client = HttpClient(NexusClient.get_endpoint(), NexusClient.get_prefix())
         self.domains = DomainRepository(self._http_client)
         self.contexts = ContextRepository(self._http_client)
         self.organizations = OrganizationRepository(self._http_client)
         self.instances = InstanceRepository(self._http_client)
         self.schemas = SchemaRepository(self._http_client)
-        self.nexus_constants = NexusConstants(self.namespace)
 
     def version_check(self, supported_versions=SUPPORTED_VERSIONS):
-        server_metadata_url = '{scheme}://{host}/'.format(
-            **self.api_root_dict)
+        server_metadata_url = '{}/'.format(NexusClient.get_endpoint())
 
         response = self._http_client.get(server_metadata_url)
 
@@ -47,16 +65,7 @@ class NexusClient(object):
             raise NexusException(response.reason)
 
     def get_fullpath_for_entity(self, entity):
-        return "{}{}".format(self.namespace, entity.path)
-
-
-class NexusConstants(object):
-
-    def __init__(self, namespace):
-        self.vocab = "{}/voc".format(namespace)
-        self.uuid_predicate = "{}/nexus/core/uuid".format(self.vocab)
-
-
+        return "{}{}".format(NexusClient.get_namespace(), entity.path)
 
 
 class NexusException(Exception):

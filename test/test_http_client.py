@@ -4,12 +4,6 @@ from hamcrest.core import assert_that
 from hamcrest.core.core.isequal import equal_to
 from pyxus.utils.http_client import HttpClient
 
-from pyxus.resources.entity import Instance
-
-from pyxus.client import NexusClient
-from pyxus.utils.data_upload_utils import DataUploadUtils
-
-
 class TestHttpClient(TestCase):
     def test__transform_url_to_defined_endpoint(self):
         client = HttpClient({'scheme':"http", 'host':"foo", 'prefix':"v0"})

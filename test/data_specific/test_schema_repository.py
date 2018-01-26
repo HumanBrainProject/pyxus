@@ -7,6 +7,7 @@ from hamcrest.core.core.isinstanceof import instance_of
 from hamcrest.core.core.isnone import not_none, none
 from hamcrest.library.number.ordering_comparison import greater_than, less_than
 
+from pyxus.client import NexusClient
 from pyxus.resources.entity import SearchResultList, Schema
 from pyxus.utils.http_client import HttpClient
 from pyxus.resources.repository import SchemaRepository
@@ -20,7 +21,7 @@ class TestSchemaRepository(TestCase):
 
     def setUp(self):
         logging.basicConfig(level=logging.DEBUG)
-        self.repository = SchemaRepository(HttpClient(conf.NEXUS_ENV_LOCALHOST))
+        self.repository = SchemaRepository(NexusClient()._http_client)
         self._create_and_publish_testschema()
         self._create_testschema_v2()
 

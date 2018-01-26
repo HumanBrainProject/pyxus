@@ -28,8 +28,8 @@ def recursive_find_matching(root_path, pattern):
 class DataUploadUtils(object):
     _client = None
 
-    def __init__(self, client=NexusClient(), upload_fully_qualified=True):
-        self._client = client
+    def __init__(self,  upload_fully_qualified=True):
+        self._client = NexusClient()
         self._upload_fully_qualified = upload_fully_qualified
         self._id_cache = {}
 
@@ -97,11 +97,11 @@ class DataUploadUtils(object):
             return self._client.instances.create(Instance.create_new(schema_data.organization, schema_data.domain, schema_data.name, schema_data.version, raw_json))
 
     def __fill_placeholders(self, template):
-        template = template.replace("{{base}}", "{{scheme}}://{{host}}:{{port}}/{{prefix}}")
+        template = template.replace("{{base}}", "{{endpoint}}:{{port}}/{{prefix}}")
         # in our structure, the port is already included within the host string -
         # to make sure we don't have any broken namespaces, we have to remove it from the template
         template = template.replace(":{{port}}", "")
-        return pystache.render(template, self._client.api_root_dict)
+        return pystache.render(template, endpoint=NexusClient.get_endpoint(), prefix=NexusClient.get_prefix())
 
 
     def __resolve_identifier(self, match):

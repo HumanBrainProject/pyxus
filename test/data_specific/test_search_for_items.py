@@ -14,7 +14,7 @@ class TestSearchForItems(unittest.TestCase):
 
     def setUp(self):
         logging.basicConfig(level=logging.DEBUG)
-        self.client = NexusClient(**conf.NEXUS_ENV_HBP_DEV)
+        self.client = NexusClient()
 
     def test_search_items(self):
         """ This test assumes specific test data - we therefore do not apply assumptions but make this test rather a manual one until we can ensure a specific testdata set. """
