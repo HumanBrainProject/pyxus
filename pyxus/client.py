@@ -9,7 +9,6 @@ LOGGER = logging.getLogger(__package__)
 ENV_VAR_NEXUS_ENDPOINT = "NEXUS_ENDPOINT"
 ENV_VAR_NEXUS_PREFIX = "NEXUS_PREFIX"
 ENV_VAR_NEXUS_NAMESPACE = "NEXUS_NAMESPACE"
-ENV_VAR_BLAZEGRAPH = "BLAZEGRAPH_ENDPOINT"
 
 class NexusClient(object):
     SUPPORTED_VERSIONS = ['0.8.14']
@@ -61,17 +60,9 @@ class NexusConfig(object):
        self.NEXUS_PREFIX = os.environ.get(ENV_VAR_NEXUS_PREFIX) if nexus_prefix is None and ENV_VAR_NEXUS_PREFIX in os.environ  else nexus_prefix
        if nexus_namespace is None and ENV_VAR_NEXUS_NAMESPACE in os.environ:
             self.NEXUS_NAMESPACE = os.environ.get(ENV_VAR_NEXUS_NAMESPACE)
-       elif nexus_namespace is None:
-           self.NEXUS_NAMESPACE = "{}://{}/{}".format(scheme, host, nexus_prefix)
        else:
            self.NEXUS_NAMESPACE = None
        self._validate()
-
-    def get_vocab(self):
-        return "{}/voc".format(self.NEXUS_NAMESPACE)
-
-    def get_uuid_predicate(self):
-        return "{}/nexus/core/uuid".format(self.get_vocab())
 
     def _validate(self):
         if self.NEXUS_ENDPOINT is None:
