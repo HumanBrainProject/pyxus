@@ -8,10 +8,9 @@ from hamcrest.core.core.isnone import not_none, none
 from hamcrest.core.core.isnot import is_not
 from hamcrest.library.number.ordering_comparison import greater_than, less_than
 
+from pyxus.client import NexusClient
 from pyxus.resources.entity import Organization, SearchResultList
-from pyxus.utils.http_client import HttpClient
 from pyxus.resources.repository import OrganizationRepository
-import pyxus.config as conf
 from hamcrest import (assert_that)
 
 
@@ -36,7 +35,7 @@ class TestOrganizationRepository(TestCase):
 
     def setUp(self):
         logging.basicConfig(level=logging.DEBUG)
-        self.repository = OrganizationRepository(HttpClient(conf.NEXUS_ENV_LOCALHOST))
+        self.repository = OrganizationRepository((NexusClient()._http_client))
 
     def test_read_latest_revision(self):
         result = self.repository.read("hbp")

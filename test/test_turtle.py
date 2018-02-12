@@ -1,8 +1,8 @@
 import logging
 from unittest import TestCase
 
-import pyxus.config as conf
-from pyxus.resources.entity import Schema, Instance
+from pyxus.client import NexusClient
+from pyxus.resources.entity import Schema, Instance, Organization, Domain
 from pyxus.resources.repository import SchemaRepository, InstanceRepository
 from pyxus.utils.http_client import HttpClient
 
@@ -33,20 +33,25 @@ class TestSchemaRepository(TestCase):
 
     def setUp(self):
         logging.basicConfig(level=logging.DEBUG)
-        self.schema_repository = SchemaRepository(HttpClient(conf.NEXUS_ENV_LOCALHOST))
-        self.instance_repository = InstanceRepository(HttpClient(conf.NEXUS_ENV_LOCALHOST))
+        self.client = NexusClient()
 
     def test_create_turtle_schema(self):
-        schema = self.schema_repository.read("test", "core", "turtle", "v0.0.3")
+        schema = self.client.schemas.read("test", "core", "turtle", "v0.0.3")
         if schema is None:
-            self.schema_repository.create(Schema.create_new("test", "core", "turtle", "v0.0.3", self.test_turtle_schema, is_turtle=True))
+            self.client.schemas.create(Schema.create_new("test", "core", "turtle", "v0.0.3", self.test_turtle_schema, is_turtle=True))
 
     def test_create_turtle_instance(self):
-        schema = self.schema_repository.read("test", "core", "turtle", "v0.0.4")
+        organization = self.client.organizations.read("test")
+        if organization is None:
+            self.client.organizations.create(Organization.create_new("test", "An organization for tests"))
+        domain = self.client.domains.read("test", "core")
+        if domain is None:
+            self.client.domains.create(Domain.create_new("test", "core", "A domain for tests"))
+        schema = self.client.schemas.read("test", "core", "turtle", "v0.0.4")
         if schema is None:
-            schema = self.schema_repository.create(Schema.create_new("test", "core", "turtle", "v0.0.4", self.test_turtle_schema, is_turtle=True))
+            schema = self.client.schemas.create(Schema.create_new("test", "core", "turtle", "v0.0.4", self.test_turtle_schema, is_turtle=True))
         if not schema.is_published():
-            self.schema_repository.publish(schema, True)
-        instance = self.instance_repository.create(Instance.create_new("test", "core", "turtle", "v0.0.4", self.test_turtle_instance, is_turtle=True))
-        instance = self.instance_repository.read(instance.get_organization(), instance.get_domain(), instance.get_schema(), instance.get_version(), instance.get_id())
+            self.client.schemas.publish(schema, True)
+        instance = self.client.instances.create(Instance.create_new("test", "core", "turtle", "v0.0.4", self.test_turtle_instance, is_turtle=True))
+        instance = self.client.instances.read(instance.get_organization(), instance.get_domain(), instance.get_schema(), instance.get_version(), instance.get_id())
         print instance

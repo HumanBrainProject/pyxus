@@ -8,7 +8,6 @@ import re
 import pystache
 from requests.exceptions import HTTPError
 
-from pyxus.client import NexusClient
 from pyxus.client import NexusException
 from pyxus.resources.entity import Organization, Domain, Instance, Schema, Context, Entity
 from pyxus.utils.schema_or_context_data import SchemaOrContextData
@@ -28,8 +27,8 @@ def recursive_find_matching(root_path, pattern):
 class DataUploadUtils(object):
     _client = None
 
-    def __init__(self, client=NexusClient(), upload_fully_qualified=True):
-        self._client = client
+    def __init__(self,  nexus_client, upload_fully_qualified=True):
+        self._client = nexus_client
         self._upload_fully_qualified = upload_fully_qualified
         self._id_cache = {}
 
@@ -97,11 +96,11 @@ class DataUploadUtils(object):
             return self._client.instances.create(Instance.create_new(schema_data.organization, schema_data.domain, schema_data.name, schema_data.version, raw_json))
 
     def __fill_placeholders(self, template):
-        template = template.replace("{{base}}", "{{scheme}}://{{host}}:{{port}}/{{prefix}}")
+        template = template.replace("{{base}}", "{{endpoint}}:{{port}}/{{prefix}}")
         # in our structure, the port is already included within the host string -
         # to make sure we don't have any broken namespaces, we have to remove it from the template
         template = template.replace(":{{port}}", "")
-        return pystache.render(template, self._client.api_root_dict)
+        return pystache.render(template, endpoint=self._client.NEXUS_ENDPOINT, prefix=self._client.NEXUS_PREFIX)
 
 
     def __resolve_identifier(self, match):
@@ -130,7 +129,6 @@ class DataUploadUtils(object):
     def clear_all_checksums(self, path):
         for match in recursive_find_matching(path, "*.chksum"):
             os.remove(match)
-
 
     def clear_all_instances(self, subpath=None):
         all_instances = self._client.instances.list(subpath, size=999999)

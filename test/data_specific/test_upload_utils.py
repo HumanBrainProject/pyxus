@@ -1,6 +1,5 @@
 from unittest import TestCase
 
-import pyxus.config as conf
 from pyxus.client import NexusClient
 from pyxus.utils.data_upload_utils import DataUploadUtils
 from pyxus.utils.schema_or_context_data import SchemaOrContextData

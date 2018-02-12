@@ -6,6 +6,7 @@ import re
 from pyxus.resources.entity import Organization, Domain, Schema, Instance, Context, Entity, SearchResult, SearchResultList
 
 LOGGER = logging.getLogger(__package__)
+
 class Repository(object):
 
     def __init__(self, http_client, constructor):
