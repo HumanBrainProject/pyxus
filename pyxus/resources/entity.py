@@ -57,7 +57,7 @@ class Entity(object):
         return simple
 
     def get_revision(self):
-        return self.data["rev"] if "rev" in self.data else None
+        return self.data["nxv:rev"] if "nxv:rev" in self.data else None
 
     def __str__(self):
         return "{classname}: id={id}, path={path}, revision={revision}\ndata={data}".format(
@@ -155,7 +155,7 @@ class Schema(Entity):
         return Schema(identifier, content, Schema.path)
 
     def is_published(self):
-        return self.data["published"] if "published" in self.data else False
+        return self.data["nxv:published"] if "nxv:published" in self.data else False
 
 
 class Instance(Entity):
@@ -189,7 +189,7 @@ class Context(Entity):
         return Context(identifier, content, Context.path)
 
     def is_published(self):
-        return self.data["published"] if "published" in self.data else False
+        return self.data["nxv:published"] if "nxv:published" in self.data else False
 
 
 class SearchResultList(object):
@@ -208,14 +208,14 @@ class SearchResultList(object):
 
     def get_next_link(self):
         for link in self.links:
-            if "rel" in link and link.get("rel")=="next":
+            if "nxv:rel" in link and link.get("nxv:rel")=="next":
                 return link["href"]
         return None
 
 
     def get_previous_link(self):
         for link in self.links:
-            if "rel" in link and link.get("rel") == "previous":
+            if "nxv:rel" in link and link.get("nxv:rel") == "previous":
                 return link["href"]
         return None
 
@@ -228,8 +228,7 @@ class SearchResult(object):
     def __init__(self, result_dict):
         self.data = result_dict
         self.result_id = result_dict['resultId']
-        links = result_dict['source']['links']
-        self.self_link = str([x['href'] for x in links if x['rel'] == 'self'][0])
+        self.self_link = result_dict['source']['links']['self']
 
     def __str__(self):
         return 'result_id:{}, link:{}, data:{}'.format(self.result_id, self.self_link, self.data)

@@ -13,13 +13,15 @@ class HttpClient(object):
 
     headers = {"Content-type": "application/json"}
 
-    def __init__(self, api_root_dict, raw=False):
-        self.api_root_dict = api_root_dict
+    def __init__(self, endpoint, prefix, raw=False, token=None):
         self.raw = raw
-        self.api_root = '{scheme}://{host}/{prefix}'.format(**self.api_root_dict)
+        self._prefix = prefix
+        if token is not None:
+            self.headers["Authorization"] ="Bearer {}".format(token)
+        self.api_root = '{}/{}'.format(endpoint, prefix)
 
     def _create_full_url(self, endpoint_url):
-        if endpoint_url.startswith(self.api_root_dict['scheme']):
+        if endpoint_url.startswith(self.api_root):
             full_url = endpoint_url
         else:
             full_url = '{api_root}{endpoint_url}'.format(
@@ -29,8 +31,7 @@ class HttpClient(object):
         return full_url
 
     def transform_url_to_defined_endpoint(self, provided_by_nexus):
-        key_to_find = self.api_root_dict["prefix"]
-        provided_by_nexus = provided_by_nexus[provided_by_nexus.find(key_to_find)+len(key_to_find):]
+        provided_by_nexus = provided_by_nexus[provided_by_nexus.find(self._prefix)+len(self._prefix):]
         return self._create_full_url(provided_by_nexus)
 
     def _handle_response(self, response):

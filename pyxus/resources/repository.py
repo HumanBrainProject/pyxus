@@ -27,7 +27,7 @@ class Repository(object):
         path = "{}?rev={}".format(entity.path, revision)
         result = self._http_client.put(path, entity.data)
         if result is not None:
-            new_revision = result["rev"]
+            new_revision = result["nxv:rev"]
             entity.data = self._read(entity.id, new_revision)
         return entity
 
@@ -39,7 +39,7 @@ class Repository(object):
             path = "{}?rev={}".format(entity.path, revision)
             result = self._http_client.delete(path)
             if result is not None:
-                new_revision = result["rev"]
+                new_revision = result["nxv:rev"]
                 entity.data = self._read(entity.id, new_revision)
         return entity
 
@@ -92,7 +92,7 @@ class Repository(object):
 
     def _get_last_revision(self, identifier):
         current_revision = self._read(identifier)
-        return current_revision.get("rev") or 0
+        return current_revision.get("nxv:rev") or 0
 
     def resolve_all(self, search_result_list):
         return [self.resolve(search_result) for search_result in search_result_list.results]
@@ -194,7 +194,7 @@ class SchemaRepository(Repository):
             'published': publish
         })
         if result is not None:
-            new_revision = result["rev"]
+            new_revision = result["nxv:rev"]
             entity.data = self._read(entity.id, new_revision)
         return entity
 
@@ -260,7 +260,7 @@ class ContextRepository(Repository):
             'published': publish
         })
         if result is not None:
-            new_revision = result["rev"]
+            new_revision = result["nxv:rev"]
             entity.data = self._read(entity.id, new_revision)
         return entity
 
