@@ -100,7 +100,7 @@ class DataUploadUtils(object):
         # in our structure, the port is already included within the host string -
         # to make sure we don't have any broken namespaces, we have to remove it from the template
         template = template.replace(":{{port}}", "")
-        return pystache.render(template, endpoint=self._client.NEXUS_ENDPOINT, prefix=self._client.NEXUS_PREFIX)
+        return pystache.render(template, endpoint=self._client.config.NEXUS_ENDPOINT, prefix=self._client.config.NEXUS_PREFIX)
 
 
     def __resolve_identifier(self, match):
