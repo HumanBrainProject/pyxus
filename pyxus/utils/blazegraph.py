@@ -20,7 +20,7 @@ class BlazegraphClient(object):
         if self.NEXUS_NAMESPACE is None:
             raise ValueError("The Nexus namespace is not set!")
 
-    def query(self, query, raw=False):
+    def query(self, query, raw=False, timeout=30):
         """
         Send a query to blazegraph
         :param query: the query
@@ -28,7 +28,7 @@ class BlazegraphClient(object):
         :return: the result from blazegraph
         """
         query = {'query': query}
-        response = requests.post("{}/{}".format(self.BLAZEGRAPH_ENDPOINT, "bigdata/namespace/kg/sparql"), data=query, headers={"Accept": "application/sparql-results+json", "Content-Type": "application/x-www-form-urlencoded"})
+        response = requests.post("{}/{}".format(self.BLAZEGRAPH_ENDPOINT, "bigdata/namespace/kg/sparql"), data=query, headers={"Accept": "application/sparql-results+json", "Content-Type": "application/x-www-form-urlencoded"}, timeout=timeout)
         if response.status_code == 200:
             if raw:
                 return response.content
@@ -46,7 +46,7 @@ class BlazegraphClient(object):
     def _get_uuid_predicate(self):
         return "{}/nexus/core/terms/v0.1.0/uuid".format(self._get_vocab())
 
-    def get_reverse_relations(self, uuid):
+    def get_reverse_relations(self, uuid, timeout=30):
         """
         Will return a list of entities related to the entity uuid
         :param uuid: The entity
@@ -58,6 +58,6 @@ class BlazegraphClient(object):
                 "?s <{uuid_pred}> \"{id}\"^^xsd:string. " \
                 "?rel ?p ?s" \
                 "}}".format(xsd=XSD_URI, uuid_pred=self._get_uuid_predicate(), id=uuid)
-        response = self.query(query)
+        response = self.query(query, timeout=timeout)
         result = [i.get("rel").get("value") for i in response]
         return result
