@@ -69,7 +69,7 @@ class HttpClient(object):
             return self._handle_response(response)
         except HTTPError as e:
             LOGGER.debug('request:%s %s\n%r', method_name, full_url, data)
-            LOGGER.error("ERROR {} ({}): {} {} {}".format(method_name.upper(), e.response.status_code, full_url, json.dumps(data), e.response.content))
+            LOGGER.error("ERROR {} ({}): {} {} {} {}".format(method_name.upper(), e.response.status_code, full_url, json.dumps(data), e.response.content, e.response.text))
             raise(e)
 
     @staticmethod
@@ -98,5 +98,7 @@ class HttpClient(object):
 
     def delete(self, endpoint_url):
         full_url = self._create_full_url(endpoint_url)
-        response = requests.delete(full_url)
+        headers = {}
+        headers.update(self.headers)
+        response = requests.delete(full_url, headers=headers)
         return self._handle_response(response)

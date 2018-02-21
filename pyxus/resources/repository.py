@@ -93,18 +93,21 @@ class Repository(object):
 
     def _get_last_revision(self, identifier):
         current_revision = self._read(identifier)
-        return current_revision.get("nxv:rev") or 0
+        if current_revision is not None and "nxv:rev" in current_revision:
+            return current_revision.get("nxv:rev") or 0
+        else:
+            return 0
 
     def resolve_all(self, search_result_list):
         return [self.resolve(search_result) for search_result in search_result_list.results]
 
-    def find_by_identifier(self, subpath, value):
-        return self.find_by_field(subpath, "http://schema.org/identifier", value)
+    def find_by_identifier(self, subpath, value, resolved=False, deprecated=False):
+        return self.find_by_field(subpath, "http://schema.org/identifier", value, resolved=resolved, deprecated=deprecated)
 
     def find_by_field(self, subpath, field_path, value, resolved=False, deprecated=False):
         if not subpath.startswith('/'):
             subpath = u"/{}".format(subpath)
-        path = "{path}{subpath}/?&filter={{\"filter\":{{\"op\":\"eq\",\"path\":\"{field_path}\",\"value\":{value}}}}}&{deprecated}".format(
+        path = "{path}{subpath}/?&filter={{\"op\":\"eq\",\"path\":\"{field_path}\",\"value\":{value}}}&{deprecated}".format(
             path=self.path,
             subpath = subpath,
             field_path=field_path,
@@ -241,6 +244,8 @@ class InstanceRepository(Repository):
         data = self._read(identifier)
         return Instance(identifier, data, self.path) if data is not None else None
 
+    def list_by_schema(self, organization, domain, schema, version, resolved=False, full_text_query=None, filter_query=None, from_index=None, size=None, deprecated=False):
+        return self.list(subpath="/{}/{}/{}/{}".format(organization, domain, schema, version), resolved=resolved, full_text_query=full_text_query, filter_query=filter_query, from_index=from_index, deprecated=deprecated)
 
 
 class ContextRepository(Repository):

@@ -100,7 +100,7 @@ class Entity(object):
         raise ValueError("\"{url}\" is not applicable to {root_path}!".format(url=url, root_path=root_path))
 
     def is_deprecated(self):
-        return self.data.get("deprecated")!=False
+        return self.data.get("nxv:deprecated")!=False
 
 
     def get_identifier(self):
@@ -207,17 +207,10 @@ class SearchResultList(object):
         )
 
     def get_next_link(self):
-        for link in self.links:
-            if "nxv:rel" in link and link.get("nxv:rel")=="next":
-                return link["href"]
-        return None
-
+        return self.links["next"] if "next" in self.links else None
 
     def get_previous_link(self):
-        for link in self.links:
-            if "nxv:rel" in link and link.get("nxv:rel") == "previous":
-                return link["href"]
-        return None
+        return self.links["previous"] if "previous" in self.links else None
 
 
 class SearchResult(object):
