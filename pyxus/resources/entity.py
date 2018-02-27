@@ -86,7 +86,11 @@ class Entity(object):
         return re.match(r".*?/.*?/.*?/(?P<version>.*?)(/.*)?$",self.id).group("version")
 
     def get_id(self):
-        return re.match(r".*?/.*?/.*?/.*?/(?P<id>.*?)(/.*)?$", self.id).group("id")
+        return Entity.get_uuid_from_id(self.id)
+
+    @staticmethod
+    def get_uuid_from_id(id):
+        return re.match(r".*?/.*?/.*?/.*?/(?P<id>.*?)(/.*)?$", id).group("id")
 
     @staticmethod
     def extract_id_from_url(url, root_path):
@@ -102,11 +106,11 @@ class Entity(object):
     def is_deprecated(self):
         return self.data.get("nxv:deprecated")!=False
 
-
     def get_identifier(self):
         if "http://schema.org/identifier" in self.data:
             return self.data.get("http://schema.org/identifier")
         return None
+
 
 class Organization(Entity):
 
