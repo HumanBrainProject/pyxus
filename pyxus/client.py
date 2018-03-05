@@ -15,7 +15,8 @@ class NexusClient(object):
 
     def __init__(self, scheme=None, host=None, prefix=None, alternative_namespace=None, token=None):
         self.version = None
-        self.namespace =         self.env = None
+        self.namespace = alternative_namespace if alternative_namespace is not None else "{}://{}".format(scheme, host)
+        self.env = None
         self.config = NexusConfig(scheme, host, prefix, alternative_namespace)
         self._http_client = HttpClient(self.config.NEXUS_ENDPOINT, self.config.NEXUS_PREFIX, token=token)
         self.domains = DomainRepository(self._http_client)
