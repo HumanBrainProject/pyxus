@@ -61,10 +61,12 @@ class Repository(object):
         return self.constructor(identifier, search_result.data["source"], self.path) if type(search_result.data) is dict and "source" in search_result.data else None
 
     def list_by_full_subpath(self, subpath, resolved=False):
+        if not subpath.startswith('/'):
+            subpath = u"/{}".format(subpath)
         if resolved:
-            path = "{path}/{subpath}&fields=all".format(path=self.path, subpath=subpath or '')
+            path = "{path}{subpath}&fields=all".format(path=self.path, subpath=subpath or '')
         else:
-            path = "{path}/{subpath}".format(path=self.path, subpath=subpath or '')
+            path = "{path}{subpath}".format(path=self.path, subpath=subpath or '')
         return self.list_by_full_path(path)
 
     def list_by_full_path(self, path):
@@ -107,7 +109,7 @@ class Repository(object):
     def find_by_field(self, subpath, field_path, value, resolved=False, deprecated=False):
         if not subpath.startswith('/'):
             subpath = u"/{}".format(subpath)
-        path = "{path}/{subpath}/?&filter={{\"op\":\"eq\",\"path\":\"{field_path}\",\"value\":{value}}}&{deprecated}".format(
+        path = "{path}{subpath}/?&filter={{\"op\":\"eq\",\"path\":\"{field_path}\",\"value\":{value}}}&{deprecated}".format(
             path=self.path,
             subpath = subpath,
             field_path=field_path,
@@ -129,7 +131,7 @@ class Repository(object):
             subpath = u"/{}".format(subpath)
         else:
             subpath=""
-        path = "{path}/{subpath}/?&q={query}&{deprecated}".format(path=self.path,
+        path = "{path}{subpath}/?&q={query}&{deprecated}".format(path=self.path,
             subpath=subpath,
             query = value,
             deprecated="deprecated={}".format(deprecated) if deprecated is not None else ''
