@@ -62,7 +62,7 @@ class NexusConfig(object):
        if nexus_namespace is None and ENV_VAR_NEXUS_NAMESPACE in os.environ:
             self.NEXUS_NAMESPACE = os.environ.get(ENV_VAR_NEXUS_NAMESPACE)
        else:
-           self.NEXUS_NAMESPACE = None
+           self.NEXUS_NAMESPACE = nexus_namespace
        self._validate()
 
     def _validate(self):
