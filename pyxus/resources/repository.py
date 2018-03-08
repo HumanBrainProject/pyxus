@@ -61,6 +61,8 @@ class Repository(object):
         return self.constructor(identifier, search_result.data["source"], self.path) if type(search_result.data) is dict and "source" in search_result.data else None
 
     def list_by_full_subpath(self, subpath, resolved=False):
+        if not subpath.startswith('/'):
+            subpath = u"/{}".format(subpath)
         if resolved:
             path = "{path}{subpath}&fields=all".format(path=self.path, subpath=subpath or '')
         else:

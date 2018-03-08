@@ -109,7 +109,7 @@ class DataUploadUtils(object):
             return self._id_cache.get(match)
         else:
             result_list = self._client.instances.list_by_full_subpath(match + "&deprecated=false")
-            if len(result_list.results) > 0:
+            if result_list is not None and len(result_list.results) > 0:
                 # TODO check - do we really want to select the first one if ambiguous?
                 result = result_list.results[0].result_id
                 self._id_cache[match] = result
