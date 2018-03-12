@@ -55,7 +55,7 @@ class NexusConfig(object):
        if host is None and scheme is None and ENV_VAR_NEXUS_ENDPOINT in os.environ:
            self.NEXUS_ENDPOINT = os.environ.get(ENV_VAR_NEXUS_ENDPOINT)
        elif host is not None and scheme is not None:
-           self.NEXUS_ENDPOINT = "{}/{}".format(scheme, host)
+           self.NEXUS_ENDPOINT = "{}://{}".format(scheme, host)
        else:
            self.NEXUS_ENDPOINT = None
        self.NEXUS_PREFIX = os.environ.get(ENV_VAR_NEXUS_PREFIX) if nexus_prefix is None and ENV_VAR_NEXUS_PREFIX in os.environ  else nexus_prefix
