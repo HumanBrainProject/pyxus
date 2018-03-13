@@ -56,7 +56,7 @@ class DataUploadUtils(object):
             schema_data = SchemaOrContextData.by_filepath(file_path, content)
             return creation_function(schema_data, force_domain_creation, update_if_already_exists, publish)
 
-    def create_instance_by_file(self, file_path, fully_qualify=True):
+    def create_instance_by_file(self, file_path, fully_qualify=False):
         """Create a new instance for the provided data
 
         Arguments:
@@ -70,7 +70,7 @@ class DataUploadUtils(object):
             if fully_qualify:
                 final_json = Entity.fully_qualify(json.loads(raw_json))
             else:
-                final_json = raw_json
+                final_json = json.loads(raw_json) if type(raw_json) is not dict else raw_json
             schema_data = SchemaOrContextData.by_filepath(file_path, final_json)
             schema_identifier = "http://schema.org/identifier"
             if self._upload_fully_qualified:

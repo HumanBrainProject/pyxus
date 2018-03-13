@@ -135,5 +135,5 @@ class TestInstanceRepository(TestCase):
     }
 
     def test_find_by_field(self):
-        search = self.repository.find_by_field("/shape/core/activity/v0.0.1", "http://schema.org/identifier", "NCRMI_210")
+        search = self.repository.find_by_field("/minds/core/activity/v0.0.1", "http://schema.org/identifier", "NCRMI_210")
         print search
