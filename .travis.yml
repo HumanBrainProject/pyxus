@@ -8,7 +8,7 @@ install:
   - make install
 script:
   - make lint || echo "linting failed"
-  - make test || echo "test failed"
+  - make test
 before_deploy:
   - cd pyxus
 deploy:
@@ -18,4 +18,5 @@ deploy:
     secure: "qYXYlvEs0KX8XVHBaHin+lD278eFeHEXU9PofeDq5sjSWj2NiUfi4/amgA79bLaXDkLz/OYfSCMKU3r2L9KVO5c2bRl654sX72luqolhTSf2MJ/M+iB6qpog+34P5t9xq+GOz32vdbQ64eGPlgoVsCVkvAgamzr5eNp5oeqKdq/cbhp6PkOnc8o2TysATJuM89bZKoGgxNsY/zpKSfgotxenGSghCQCaks7Z3wvWGGKSynX1Ji9ta3Qcu8kjsyczjjbEvhTnmuV9TXMU0xSISlc971mMplhHGVJhr5+aqHNWonzpkxQwtDlY0jnzrBaAkKG0ws5J9eofRZtg4Tq+SH2rn5061mnshBfpdHKoXdLLwJahLRaneIasnZq5MhAfjnjMCZyd5/jFfh8J09kfSfW+7mbdmgYCaBICcnG1KP8516vModQ+pXrA0t6i/53bhcChWuZuFoMRExFGr9C8wsivZ8aeT8N4GMIroxc/qZR/SiGj7BYWqrjxbtoz7h9+290tCJIyaVx+bOmP2GUMHrc4g8bkqnldhG8oJDQ1iSwrak6Mtit4jmOoz/01fSfeXA1L7I3n5Dw9EL9+uUipZyFT46qpIgBnb1m991N5oQ2X9ojIc/HJIsctEdlwwHvCkwg0IRCuMJXZum2nsVoYWLkTK3ZJOvxEUmGsaD7JUB0="
   server: https://test.pypi.org/legacy/
   on:
-    branch: feature/restructure
+    branch: master
+    tags: true
