@@ -7,9 +7,8 @@ python:
 install:
   - make install
 script:
-  - set +e
-  - make lint
-  - make test
+  - make lint || echo "linting failed"
+  - make test || echo "test failed"
 deploy:
   provider: pypi
   user: hbp_platform
