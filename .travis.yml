@@ -11,3 +11,13 @@ install:
 # command to run tests
 script:
   - make test # or py.test for Python versions 3.5 and below
+
+deploy:
+  provider: pypi
+  user: "hbp_platform"
+  password:
+    secure: "Ksk467bbo/mdkjigAWLhxUzTEAbz3b0Z3/Piu1I8KbMl68yD8GKsRfECUglKvIz+bznmrZizNcQPzAVH2LFMGPHvq+ZAkFP1yj63RFX1UroA4ZSMXk0bG65h7H0KhmXyG3qbJod98lW94qhtZ5LglQttfB6cjMlxFnth5jHMFqM1CkZcQz9Ctm3Kw0cbCwZTKSoJDl6rkL/TJN8EhYafWLzn1rrqxs5bsXYyr9bnDiUB347cOxtjfZDOKzWrC1Ek9JqRkATFVe04gtPMR9yppCSGInh5MSE3qigDjr7zWOhGv1v/EnM3pnw6rL5ZIJiS59gylCH0KcgK1PnUd1YWKeHQ89QiUZtipmIe3NWJ1+pQeyn6n+sB53sPmKdEJm3ya0RyhdITyXnUZWulrkF+Mki5c6xfxMEPoc4v97fJg6MpYfqfYa3/rzekFzfh9TRHpFQ+16ayN7/H6mr6NP8PxCPxJc0xXyCDiXcvJtflulb6hybdkIsb6J1Yv5mQthiveEds3Y1vxk2ZABwzg5K/DsjIJ2UJH99rZ0/IrM3tC0KPEdIte+eH4zDd+l0BWk+5qYRRithCzjje0Z1hNVNl94WGDL2m+45Z3d6Iao+d+8lZ6KnBMoZ8qw6eyrJgOvBmUGK288dPYskmpX90XCAFx1OToAJFxCo8IdnEQgT3xN4="
+  server: "https://test.pypi.org/legacy/"
+  on:
+   tags: true
+   branch: master
