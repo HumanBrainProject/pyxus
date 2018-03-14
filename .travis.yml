@@ -9,8 +9,8 @@ install:
 script:
   - set +e
   - make lint
-  - set -e
   - make test
+  - set -e
 
 deploy:
   provider: pypi
