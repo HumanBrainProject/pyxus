@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from pyxus.client import NexusClient
+from pyxus.test import env_setup
 from pyxus.utils.data_upload_utils import DataUploadUtils
 from pyxus.utils.schema_or_context_data import SchemaOrContextData
 
@@ -43,15 +44,16 @@ class TestLoader(TestCase):
     }
 
     def setUp(self):
+        env_setup.load_env()
         self.upload_utils = DataUploadUtils(NexusClient())
 
     def test_upload_schema(self):
-        schema_data = SchemaOrContextData(self.exampleSchema)
-        result = self.loader._create_schema(data=schema_data, force_domain_creation=True, publish=True)
+        schema_data = SchemaOrContextData('hbp', 'test', 'foo','v0.0.1', self.exampleSchema )
+        result = self.upload_utils._create_schema(data=schema_data, force_domain_creation=True, publish=True, update_if_already_exists=True)
         print result
 
     def test_load_entities(self):
-        self.loader.__resolve_entities("dsfsafas{{resolve /hbp/core/person/v0.0.8?q=Lisa}}dsfas{{resolve /hbp/core/foo?q=abc}}fas")
+        self.upload_utils.__resolve_entities("dsfsafas{{resolve /hbp/core/person/v0.0.8?q=Lisa}}dsfas{{resolve /hbp/core/foo?q=abc}}fas")
 
     def test_load_entities_with_filter(self):
-        self.loader.__resolve_entities("{{resolve /minds/ethics/authority/v0.0.1/?filter={\"filter\": {\"path\": \"http://schema.org/identifier\", \"value\": \"d5b9290a0b67727d4ba1ca6059dc31a6\", \"op\": \"eq\"}}}}")
+        self.upload_utils.__resolve_entities("{{resolve /minds/ethics/authority/v0.0.1/?filter={\"filter\": {\"path\": \"http://schema.org/identifier\", \"value\": \"d5b9290a0b67727d4ba1ca6059dc31a6\", \"op\": \"eq\"}}}}")

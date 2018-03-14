@@ -9,10 +9,10 @@ from hamcrest.library.number.ordering_comparison import greater_than, less_than
 
 from pyxus.client import NexusClient
 from pyxus.resources.entity import SearchResultList, Schema
-from pyxus.utils.http_client import HttpClient
 from pyxus.resources.repository import SchemaRepository
-import pyxus.config as conf
 from hamcrest import (assert_that)
+
+from pyxus.test import env_setup
 
 
 class TestSchemaRepository(TestCase):
@@ -20,6 +20,7 @@ class TestSchemaRepository(TestCase):
     default_prefix = "hbp"
 
     def setUp(self):
+        env_setup.load_env()
         logging.basicConfig(level=logging.DEBUG)
         self.repository = SchemaRepository(NexusClient()._http_client)
         self._create_and_publish_testschema()

@@ -8,16 +8,18 @@ from hamcrest.library.number.ordering_comparison import greater_than, less_than
 
 from pyxus.client import NexusClient
 from pyxus.resources.entity import SearchResultList,  Instance
-from pyxus.utils.http_client import HttpClient
 from pyxus.resources.repository import InstanceRepository
-import pyxus.config as conf
 from hamcrest import (assert_that)
 
+from pyxus.test import env_setup
 
 
 class TestInstanceRepository(TestCase):
 
     default_prefix = "hbp"
+
+    def setUp(self):
+        env_setup.load_env()
 
     def _get_instance_uuid(self):
         single_result = self.repository.list(subpath="/hbp/core/schematest/v0.0.1", size=1, deprecated=None)

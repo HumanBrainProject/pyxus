@@ -13,6 +13,8 @@ from pyxus.resources.entity import Organization, SearchResultList
 from pyxus.resources.repository import OrganizationRepository
 from hamcrest import (assert_that)
 
+from pyxus.test import env_setup
+
 
 class TestOrganizationRepository(TestCase):
 
@@ -34,6 +36,7 @@ class TestOrganizationRepository(TestCase):
 
 
     def setUp(self):
+        env_setup.load_env()
         logging.basicConfig(level=logging.DEBUG)
         self.repository = OrganizationRepository((NexusClient()._http_client))
 

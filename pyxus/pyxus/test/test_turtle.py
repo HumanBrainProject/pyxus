@@ -3,9 +3,7 @@ from unittest import TestCase
 
 from pyxus.client import NexusClient
 from pyxus.resources.entity import Schema, Instance, Organization, Domain
-from pyxus.resources.repository import SchemaRepository, InstanceRepository
-from pyxus.utils.http_client import HttpClient
-
+from pyxus.test import env_setup
 
 class TestSchemaRepository(TestCase):
 
@@ -32,6 +30,7 @@ class TestSchemaRepository(TestCase):
 
 
     def setUp(self):
+        env_setup.load_env()
         logging.basicConfig(level=logging.DEBUG)
         self.client = NexusClient()
 

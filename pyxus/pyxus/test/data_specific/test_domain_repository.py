@@ -13,6 +13,8 @@ from pyxus.resources.entity import Domain, SearchResultList
 from pyxus.resources.repository import DomainRepository
 from hamcrest import (assert_that)
 
+from pyxus.test import env_setup
+
 
 class TestDomainRepository(TestCase):
 
@@ -35,6 +37,7 @@ class TestDomainRepository(TestCase):
             assert_that(len(search.results), expected_length)
 
     def setUp(self):
+        env_setup.load_env()
         logging.basicConfig(level=logging.DEBUG)
         self.repository = DomainRepository(NexusClient()._http_client)
 

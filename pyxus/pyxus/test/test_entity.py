@@ -5,11 +5,13 @@ from hamcrest.core.assert_that import assert_that
 from hamcrest.core.core.isequal import equal_to
 
 from pyxus.resources.entity import Entity, Schema
+from pyxus.test import env_setup
 
 
 class TestEntity(TestCase):
 
     def setUp(self):
+        env_setup.load_env()
         logging.basicConfig(level=logging.DEBUG)
 
     def test_extract_id_from_url(self):

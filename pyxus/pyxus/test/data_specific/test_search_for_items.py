@@ -4,15 +4,15 @@ import unittest
 from hamcrest.library.number.ordering_comparison import greater_than
 
 from pyxus.client import NexusClient
-import pyxus.config as conf
 
-from hamcrest import (assert_that, instance_of, has_properties, not_none, equal_to)
-
+from hamcrest import (assert_that)
+from pyxus.test import env_setup
 
 class TestSearchForItems(unittest.TestCase):
     client = {}
 
     def setUp(self):
+        env_setup.load_env()
         logging.basicConfig(level=logging.DEBUG)
         self.client = NexusClient()
 
