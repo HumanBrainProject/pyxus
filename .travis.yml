@@ -9,6 +9,8 @@ install:
 script:
   - make lint || echo "linting failed"
   - make test || echo "test failed"
+before_deploy:
+  - cd pyxus
 deploy:
   provider: pypi
   user: hbp_platform
