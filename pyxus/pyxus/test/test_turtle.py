@@ -1,4 +1,4 @@
-#   Copyright 2018 HumanBrainProject
+#   Copyright (c) 2018, EPFL/Human Brain Project PCO
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+
 
 import logging
 from unittest import TestCase
@@ -59,7 +60,7 @@ class TestSchemaRepository(TestCase):
         if res['values_changed']:
           assert all( self.__ignore_id(self.json_schema_id, value)for key, value in res['values_changed'].iteritems())
         assert True
-        
+
     def test_create_turtle_instance(self):
         jsonld_instance = transform_turtle_to_jsonld(self.test_turtle_instance)
         assert cmp(jsonld_instance, self.expected_jsonld_instance) == 0

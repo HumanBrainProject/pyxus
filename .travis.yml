@@ -13,7 +13,7 @@ after_success:
 script:
   - make lint || echo "linting failed"
   - make test
-  - coverage run --source=pyxus/pyxus -m unittest discover -s pyxus/pyxus/test
+  - cd pyxus && coverage run --source=pyxus/ -m unittest discover -s pyxus/test && cd ..
 before_deploy:
   - cd pyxus
 deploy:
