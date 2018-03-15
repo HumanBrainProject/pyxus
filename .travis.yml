@@ -7,11 +7,13 @@ python:
 install:
   - make install
   - pip install codecov
+  - pip install coverage
 after_success:
   - codecov
 script:
   - make lint || echo "linting failed"
   - make test
+  - coverage run --source=pyxus/pyxus -m unittest discover -s pyxus/pyxus/test
 before_deploy:
   - cd pyxus
 deploy:
