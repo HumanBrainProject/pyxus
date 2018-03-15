@@ -11,23 +11,12 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-# encoding: utf-8
-from hamcrest.core.core.isequal import equal_to
-import logging
-import unittest
 
-from hamcrest import (assert_that)
-from pyxus.test import env_setup
 
-LOGGER = logging.getLogger(__name__)
-
-class TestClient(unittest.TestCase):
-
-    client = {}
-
-    def setUp(self):
-        env_setup.load_env()
-        logging.basicConfig(level=logging.DEBUG)
-
-    def test_version_check(self):
-        assert_that(self.client['localhost'].version_check(), equal_to(True))
+def ordered(obj):
+    if isinstance(obj, dict):
+        return sorted((k, ordered(v)) for k, v in obj.items())
+    if isinstance(obj, list):
+        return sorted(ordered(x) for x in obj)
+    else:
+        return obj
