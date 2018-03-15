@@ -6,7 +6,7 @@ python:
 - '3.5'
 install:
   - make install
-  - pip install --user codecov
+  - pip install codecov
 after_success:
   - codecov
 script:
