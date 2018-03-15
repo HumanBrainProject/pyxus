@@ -8,6 +8,7 @@ VIRTUAL_ENV := $(CURDIR)/venv
 DIST := $(CURDIR)/dist
 PIP := $(VIRTUAL_ENV)/bin/pip
 PYTHON := $(VIRTUAL_ENV)/bin/python
+COVERAGE := $(VIRTUAL_ENV)/bin/coverage
 MANAGE := $(PYTHON) $(SRC_PATH)/manage.py
 PIP_CACHE := $(CURDIR)/pip-cache
 DOC_REQ_FILE_PATH := $(MODULE_PATH)/requirements_documentation.txt
@@ -64,7 +65,8 @@ lint: test-install
 
 test: install test-install
 	$(MANAGE) test $(MODULE_PATH)
-	cd $(SRC_PATH) && $(PYTHON) -m unittest discover
+	cd $(SRC_PATH) && $(COVERAGE) run --source=. -m unittest discover -s pyxus/test
+
 
 test-install: virtualenv $(TEST_REQ_FILE_PATH)
 	$(PIP) install $(pip_caching_option) -r $(TEST_REQ_FILE_PATH)
