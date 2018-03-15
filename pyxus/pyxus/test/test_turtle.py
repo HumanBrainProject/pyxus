@@ -15,7 +15,7 @@
 import logging
 from unittest import TestCase
 
-from pyxus.test.utils.utils import ordered
+from pyxus.test import utils
 from pyxus.utils.turtle_schema_transformer import transform_turtle_to_jsonld_schema, \
     transform_turtle_to_jsonld
 from deepdiff import DeepDiff
@@ -55,10 +55,11 @@ class TestSchemaRepository(TestCase):
 
     def test_create_turtle_schema(self):
         jsonld_schema = transform_turtle_to_jsonld_schema(self.test_turtle_schema)
-        res = DeepDiff(ordered(jsonld_schema), ordered(self.expected_jsonld_schema))
+        res = DeepDiff(utils.ordered(jsonld_schema), utils.ordered(self.expected_jsonld_schema))
         if res['values_changed']:
           assert all( self.__ignore_id(self.json_schema_id, value)for key, value in res['values_changed'].iteritems())
         assert True
+        
     def test_create_turtle_instance(self):
         jsonld_instance = transform_turtle_to_jsonld(self.test_turtle_instance)
         assert cmp(jsonld_instance, self.expected_jsonld_instance) == 0
