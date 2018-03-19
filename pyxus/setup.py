@@ -47,7 +47,7 @@ reqs = [str(ir.req) for ir in INSTALL_REQS]
 
 setup(
     name='pyxus',
-    version='0.1.3',
+    version='0.2.0',
     packages=['pyxus', 'pyxus.resources', 'pyxus.utils'],
     install_requires = reqs,
     author='HumanBrainProject',
