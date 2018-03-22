@@ -16,11 +16,20 @@
 import logging
 from abc import abstractmethod
 import re
+import codecs
 
 
 from pyxus.resources.entity import Organization, Domain, Schema, Instance, Context, Entity, SearchResult, SearchResultList
 
 LOGGER = logging.getLogger(__package__)
+
+if hasattr(str, "decode"):  # Python 2
+    def decode_escapes(s):
+        return s.decode("string_escape")
+else:                       # Python 3
+    def decode_escapes(s):
+        return codecs.getdecoder('unicode_escape')(s)[0]
+
 
 class Repository(object):
 
@@ -85,7 +94,7 @@ class Repository(object):
         return self.list_by_full_path(path)
 
     def list_by_full_path(self, path):
-        path = path.decode("string_escape")
+        path = decode_escapes(path)
         resolved = "fields=all" in path
         result = self._http_client.get(path)
         if result is not None:
