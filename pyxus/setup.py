@@ -11,14 +11,18 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import os
 
 from setuptools import setup
 
-try:
-    import pypandoc
-    long_description = pypandoc.convert('../README.md', 'rst')
-except(IOError, ImportError):
-    long_description = open('../README.md').read()
+if os.path.exists("../README.md"):
+    try:
+        import pypandoc
+        long_description = pypandoc.convert('../README.md', 'rst')
+    except(IOError, ImportError):
+        long_description = open('../README.md').read()
+else:
+    long_description = "Pyxus is a python library for accessing and managing the nexus knowledge graph."
 
 setup(
     name='pyxus',
