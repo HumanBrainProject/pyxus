@@ -53,19 +53,19 @@ class Entity(object):
             return self._get_simplified_data(self.data[key]) if simplified else self.data[key]
         elif simplified:
             for k in self.data:
-                if re.match(".*?:"+key, k):
-                    return  self._get_simplified_data(self.data[k])
+                if re.match(".*?:" + key, k):
+                    return self._get_simplified_data(self.data[k])
         return None
 
     @staticmethod
     def _get_simplified_data(data):
-        if not type(data) is dict:
+        if not isinstance(data, dict):
             return data
         simple = {}
         for key in data:
             if not key.startswith("@"):
                 new_key = re.sub(".*?:", "", key)
-                if type(data[key]) is dict:
+                if isinstance(data[key], dict):
                     simple[new_key] = Entity._get_simplified_data(data[key])
                 else:
                     simple[new_key] = data[key]
@@ -98,18 +98,18 @@ class Entity(object):
         return re.match(r".*?/.*?/(?P<schema>.*?)(/.*)?$", self.id).group("schema")
 
     def get_version(self):
-        return re.match(r".*?/.*?/.*?/(?P<version>.*?)(/.*)?$",self.id).group("version")
+        return re.match(r".*?/.*?/.*?/(?P<version>.*?)(/.*)?$", self.id).group("version")
 
     def get_id(self):
         return Entity.get_uuid_from_id(self.id)
 
     @staticmethod
-    def get_uuid_from_id(id):
-        return re.match(r".*?/.*?/.*?/.*?/(?P<id>.*?)(/.*)?$", id).group("id")
+    def get_uuid_from_id(identifier):
+        return re.match(r".*?/.*?/.*?/.*?/(?P<id>.*?)(/.*)?$", identifier).group("id")
 
     @staticmethod
     def extract_id_from_url(url, root_path):
-        regex = "(?<={root_path}/).*?(?=(\?|$|#))".format(root_path=root_path)
+        regex = r"(?<={root_path}/).*?(?=(\?|$|#))".format(root_path=root_path)
         r = re.search(regex, url)
         if r is not None:
             result = r.group(0)
@@ -119,7 +119,7 @@ class Entity(object):
         raise ValueError("\"{url}\" is not applicable to {root_path}!".format(url=url, root_path=root_path))
 
     def is_deprecated(self):
-        return self.data.get("nxv:deprecated")!=False
+        return self.data.get("nxv:deprecated") != False
 
     def get_identifier(self):
         if "http://schema.org/identifier" in self.data:
@@ -128,19 +128,18 @@ class Entity(object):
 
 
 class Organization(Entity):
-
     path = "/organizations"
 
     @classmethod
     def create_new(cls, name, description):
-        json = {
+        data = {
             "@context": {
                 "schema2": "http://schema.org/"
             },
             "schema:name": name,
             "schema:description": description
         }
-        return Organization(name, json, Organization.path)
+        return Organization(name, data, Organization.path)
 
 
 class Domain(Entity):
@@ -152,11 +151,11 @@ class Domain(Entity):
 
     @classmethod
     def create_new(cls, organization, domain, description):
-        json = {
+        data = {
             'description': description
         }
         identifier = Domain.create_id(organization, domain)
-        return Domain(identifier, json, Domain.path)
+        return Domain(identifier, data, Domain.path)
 
 
 class Schema(Entity):
@@ -188,12 +187,13 @@ class Instance(Entity):
     def create_new(cls, organization, domain, schema, version, content, is_turtle=False):
         if is_turtle:
             content = transform_turtle_to_jsonld(content)
-            if type(content) is list and len(content)==1:
+            if isinstance(content, list) and len(content) == 1:
                 content = content[0]
             else:
                 raise ValueError("Can't handle multiple instances in same file!")
         identifier = Instance.create_id(organization, domain, schema, version)
         return Instance(identifier, content, Instance.path)
+
 
 class Context(Entity):
     path = "/contexts"
@@ -222,7 +222,7 @@ class SearchResultList(object):
         return "{classname}: total={total}, first_entry=({first_entry})".format(
             classname=self.__class__.__name__,
             total=self.total,
-            first_entry=self.results[0] if self.results is not None and len(self.results) > 0 else "no results"
+            first_entry=self.results[0] if self.results is not None and self.results else "no results"
         )
 
     def get_next_link(self):

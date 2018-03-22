@@ -25,8 +25,9 @@ ENV_VAR_NEXUS_ENDPOINT = "NEXUS_ENDPOINT"
 ENV_VAR_NEXUS_PREFIX = "NEXUS_PREFIX"
 ENV_VAR_NEXUS_NAMESPACE = "NEXUS_NAMESPACE"
 
+
 class NexusClient(object):
-    SUPPORTED_VERSIONS = ['0.8.14']
+    SUPPORTED_VERSIONS = ['0.9.5', '0.9.8']
 
     def __init__(self, scheme=None, host=None, prefix=None, alternative_namespace=None, auth_client=None):
         self.version = None
@@ -42,9 +43,7 @@ class NexusClient(object):
 
     def version_check(self, supported_versions=SUPPORTED_VERSIONS):
         server_metadata_url = '{}/'.format(self.config.NEXUS_ENDPOINT)
-
         response = self._http_client.get(server_metadata_url)
-
         if response is not None:
             service_name = response.get('name')
             self.version = response.get('version')
@@ -53,12 +52,10 @@ class NexusClient(object):
                 LOGGER.info('Version supported : %s\nenv: %s',
                             self.version, self.env)
                 return True
-            else:
-                LOGGER.error('**Version unsupported**: %s\nenv: %s',
-                             self.version, self.env)
-                return True
-        else:
-            raise NexusException(response.reason)
+            LOGGER.error('**Version unsupported**: %s\nenv: %s',
+                         self.version, self.env)
+            return False
+        raise NexusException(response.reason)
 
     def get_fullpath_for_entity(self, entity):
         return "{}{}".format(self.config.NEXUS_NAMESPACE, entity.path)
@@ -67,18 +64,18 @@ class NexusClient(object):
 class NexusConfig(object):
 
     def __init__(self, scheme=None, host=None, nexus_prefix=None, nexus_namespace=None):
-       if host is None and scheme is None and ENV_VAR_NEXUS_ENDPOINT in os.environ:
-           self.NEXUS_ENDPOINT = os.environ.get(ENV_VAR_NEXUS_ENDPOINT)
-       elif host is not None and scheme is not None:
-           self.NEXUS_ENDPOINT = "{}://{}".format(scheme, host)
-       else:
-           self.NEXUS_ENDPOINT = None
-       self.NEXUS_PREFIX = os.environ.get(ENV_VAR_NEXUS_PREFIX) if nexus_prefix is None and ENV_VAR_NEXUS_PREFIX in os.environ  else nexus_prefix
-       if nexus_namespace is None and ENV_VAR_NEXUS_NAMESPACE in os.environ:
+        if host is None and scheme is None and ENV_VAR_NEXUS_ENDPOINT in os.environ:
+            self.NEXUS_ENDPOINT = os.environ.get(ENV_VAR_NEXUS_ENDPOINT)
+        elif host is not None and scheme is not None:
+            self.NEXUS_ENDPOINT = "{}://{}".format(scheme, host)
+        else:
+            self.NEXUS_ENDPOINT = None
+        self.NEXUS_PREFIX = os.environ.get(ENV_VAR_NEXUS_PREFIX) if nexus_prefix is None and ENV_VAR_NEXUS_PREFIX in os.environ else nexus_prefix
+        if nexus_namespace is None and ENV_VAR_NEXUS_NAMESPACE in os.environ:
             self.NEXUS_NAMESPACE = os.environ.get(ENV_VAR_NEXUS_NAMESPACE)
-       else:
-           self.NEXUS_NAMESPACE = nexus_namespace
-       self._validate()
+        else:
+            self.NEXUS_NAMESPACE = nexus_namespace
+        self._validate()
 
     def _validate(self):
         if self.NEXUS_ENDPOINT is None:
@@ -96,5 +93,4 @@ class NexusException(Exception):
     http_status_code -- code returned by the API
     message -- message for the exception
     """
-    def __init__(self, message):
-        self.message = message
+    pass

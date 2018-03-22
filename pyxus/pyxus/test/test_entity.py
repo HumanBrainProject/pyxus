@@ -13,12 +13,12 @@
 #   limitations under the License.
 
 
+
 import logging
 from unittest import TestCase
 
 from pyxus.resources.entity import Entity, Schema
 from pyxus.test import env_setup
-
 
 class TestEntity(TestCase):
 
@@ -29,23 +29,22 @@ class TestEntity(TestCase):
     def test_extract_id_from_url(self):
         result = Entity.extract_id_from_url(
             "http://kg:8080/v0/schemas/hbp/core/celloptimization/v0.0.1", Schema.path)
-        assert result == "hbp/core/celloptimization/v0.0.1"
+        self.assertEqual(result, "hbp/core/celloptimization/v0.0.1")
 
     def test_extract_id_from_url_with_param(self):
         result = Entity.extract_id_from_url(
             "http://kg:8080/v0/schemas/hbp/core/celloptimization/v0.0.1?hello_world", Schema.path)
-        assert result == "hbp/core/celloptimization/v0.0.1"
+        self.assertEqual(result, "hbp/core/celloptimization/v0.0.1")
 
     def test_extract_id_from_url_with_anchor(self):
         result = Entity.extract_id_from_url(
             "http://kg:8080/v0/schemas/hbp/core/celloptimization/v0.0.1#hello_world", Schema.path)
-        assert result == "hbp/core/celloptimization/v0.0.1"
+        self.assertEqual(result, "hbp/core/celloptimization/v0.0.1")
 
     def test_extract_id_from_url_with_slash_at_the_end(self):
         result = Entity.extract_id_from_url(
             "http://kg:8080/v0/schemas/hbp/core/celloptimization/v0.0.1/", Schema.path)
-
-        assert result == "hbp/core/celloptimization/v0.0.1"
+        self.assertEqual(result, "hbp/core/celloptimization/v0.0.1")
 
     def test_extract_id_from_url_with_wrong_entity(self):
         with self.assertRaises(ValueError):
@@ -66,4 +65,4 @@ class TestEntity(TestCase):
         expected_data = {
             'http://localhost:8080/vocab/hbp/core/celloptimization/contributors': 'Homer Simpson'}
 
-        assert qualified_data == expected_data
+        self.assertEqual(qualified_data, expected_data)

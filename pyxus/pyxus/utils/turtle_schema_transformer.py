@@ -17,13 +17,16 @@ import json
 
 from rdflib.graph import Graph
 
+
 def transform_turtle_to_jsonld(turtle):
     g = Graph().parse(data=turtle, format='turtle')
     content_jsonld = g.serialize(format='json-ld', indent=4)
     return json.loads(content_jsonld)
 
+
 def transform_turtle_to_jsonld_schema(turtle_shapes):
     return _wrap(transform_turtle_to_jsonld(turtle_shapes))
+
 
 def _wrap(jsonld):
     return {

@@ -42,7 +42,7 @@ def recursive_find_matching(root_path, pattern):
 class DataUploadUtils(object):
     _client = None
 
-    def __init__(self,  nexus_client, upload_fully_qualified=True):
+    def __init__(self, nexus_client, upload_fully_qualified=True):
         self._client = nexus_client
         self._upload_fully_qualified = upload_fully_qualified
         self._id_cache = {}
@@ -85,7 +85,7 @@ class DataUploadUtils(object):
             if fully_qualify:
                 final_json = Entity.fully_qualify(json.loads(raw_json))
             else:
-                final_json = json.loads(raw_json) if type(raw_json) is not dict else raw_json
+                final_json = json.loads(raw_json) if not isinstance(raw_json, dict) else raw_json
             schema_data = SchemaOrContextData.by_filepath(file_path, final_json)
             schema_identifier = "http://schema.org/identifier"
             if self._upload_fully_qualified:
@@ -95,13 +95,13 @@ class DataUploadUtils(object):
                 checksum = instance.get_checksum()
                 checksum_file = "{}.{}.chksum".format(file_path, checksum)
                 if os.path.exists(checksum_file):
-                    LOGGER.debug("{} is unchanged - no upload required".format(file_path))
-                    return
-                identifier=final_json.get(schema_identifier)
-                if type(identifier) is list:
+                    LOGGER.debug("%s is unchanged - no upload required", file_path)
+                    return None
+                identifier = final_json.get(schema_identifier)
+                if isinstance(identifier, list):
                     identifier = identifier[0]
                 found_instances = self._client.instances.find_by_field(instance.id, schema_identifier, identifier)
-                if found_instances and len(found_instances.results)>0:
+                if found_instances and found_instances.results:
                     instance.path = found_instances.results[0].self_link
                     instance.id = Instance.extract_id_from_url(instance.path, instance.root_path)
                     result = self._client.instances.update(instance)
@@ -117,14 +117,13 @@ class DataUploadUtils(object):
         template = template.replace(":{{port}}", "")
         return pystache.render(template, endpoint=self._client.config.NEXUS_ENDPOINT, prefix=self._client.config.NEXUS_PREFIX)
 
-
     def __resolve_identifier(self, match):
         if match in self._id_cache:
-            LOGGER.debug("resolved {} from cache".format(match))
+            LOGGER.debug("resolved %s from cache", match)
             return self._id_cache.get(match)
         else:
             result_list = self._client.instances.list_by_full_subpath(match + "&deprecated=false")
-            if result_list is not None and len(result_list.results) > 0:
+            if result_list is not None and result_list.results:
                 # TODO check - do we really want to select the first one if ambiguous?
                 result = result_list.results[0].result_id
                 self._id_cache[match] = result
@@ -133,10 +132,10 @@ class DataUploadUtils(object):
                 raise ValueError("No entities found for " + match)
 
     def __resolve_entities(self, template):
-        matches = re.findall("(?<=\{\{resolve ).*(?=\}\})", template)
+        matches = re.findall(r"(?<=\{\{resolve ).*(?=\}\})", template)
         for match in matches:
-            template = template.replace("\"{{resolve "+match+"}}\"", "{{ \"@id\": \"{}\"}}".format(self.__resolve_identifier(match)))
-        matches = re.findall("(?<=\{\{resolve_id ).*(?=\}\})", template)
+            template = template.replace("\"{{resolve " + match + "}}\"", "{{ \"@id\": \"{}\"}}".format(self.__resolve_identifier(match)))
+        matches = re.findall(r"(?<=\{\{resolve_id ).*(?=\}\})", template)
         for match in matches:
             template = template.replace("{{resolve_id " + match + "}}", self.__resolve_identifier(match))
         return template
