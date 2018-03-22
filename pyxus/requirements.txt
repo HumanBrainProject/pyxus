@@ -1,3 +1,4 @@
+--extra-index-url https://testpypi.python.org/pypi
 pyld==0.8.2
 attrdict==2.0.0
 backports.shutil-get-terminal-size==1.0.0
@@ -30,3 +31,4 @@ wcwidth==0.1.7
 typing==3.6.2
 curlify==1.2.1
 pystache
+git+https://github.com/HumanBrainProject/openid_http_client.git@master#egg=openid_http_client&subdirectory=openid_http_client
