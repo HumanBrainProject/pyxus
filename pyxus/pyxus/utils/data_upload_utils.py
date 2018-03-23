@@ -71,13 +71,15 @@ class DataUploadUtils(object):
             schema_data = SchemaOrContextData.by_filepath(file_path, content)
             return creation_function(schema_data, force_domain_creation, update_if_already_exists, publish)
 
-    def create_instance_by_file(self, file_path, fully_qualify=False):
+    def create_instance_by_file(self, file_path, fully_qualify=None):
         """Create a new instance for the provided data
 
         Arguments:
             file_path -- path to the location of the file to be uploaded as instance
             fully_qualify -- if True, prefixes are resolved and the JSON-LD to be uploaded will be interpretable as JSON (but with non-human-friendly, fully qualified keys)
         """
+        if fully_qualify is None:
+            fully_qualify = self._upload_fully_qualified
         with open(os.path.abspath(file_path)) as metadata_file:
             file_content = metadata_file.read()
             raw_json = self.__resolve_entities(file_content)
