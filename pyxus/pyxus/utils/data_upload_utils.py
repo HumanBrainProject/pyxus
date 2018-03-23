@@ -71,35 +71,34 @@ class DataUploadUtils(object):
             schema_data = SchemaOrContextData.by_filepath(file_path, content)
             return creation_function(schema_data, force_domain_creation, update_if_already_exists, publish)
 
-    def create_instance_by_file(self, file_path, fully_qualify=None):
+    def create_instance_by_file(self, file_path):
         """Create a new instance for the provided data
 
         Arguments:
             file_path -- path to the location of the file to be uploaded as instance
             fully_qualify -- if True, prefixes are resolved and the JSON-LD to be uploaded will be interpretable as JSON (but with non-human-friendly, fully qualified keys)
         """
-        if fully_qualify is None:
-            fully_qualify = self._upload_fully_qualified
         with open(os.path.abspath(file_path)) as metadata_file:
             file_content = metadata_file.read()
             raw_json = self.__resolve_entities(file_content)
             raw_json = self.__fill_placeholders(raw_json)
-            if fully_qualify:
-                final_json = Entity.fully_qualify(json.loads(raw_json))
-            else:
+            fully_qualified_json = Entity.fully_qualify(json.loads(raw_json))
+            if not self._upload_fully_qualified:
                 final_json = json.loads(raw_json) if not isinstance(raw_json, dict) else raw_json
+            else:
+                final_json = fully_qualified_json
             schema_data = SchemaOrContextData.by_filepath(file_path, final_json)
             schema_identifier = "http://schema.org/identifier"
             if self._upload_fully_qualified:
                 raw_json = final_json
             instance = Instance.create_new(schema_data.organization, schema_data.domain, schema_data.name, schema_data.version, raw_json)
-            if schema_identifier in final_json:
+            if schema_identifier in fully_qualified_json:
                 checksum = instance.get_checksum()
                 checksum_file = "{}.{}.chksum".format(file_path, checksum)
                 if os.path.exists(checksum_file):
                     LOGGER.debug("%s is unchanged - no upload required", file_path)
                     return None
-                identifier = final_json.get(schema_identifier)
+                identifier = fully_qualified_json.get(schema_identifier)
                 if isinstance(identifier, list):
                     identifier = identifier[0]
                 found_instances = self._client.instances.find_by_field(instance.id, schema_identifier, identifier)
