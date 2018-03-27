@@ -112,7 +112,7 @@ class DataUploadUtils(object):
             return self._client.instances.create(Instance.create_new(schema_data.organization, schema_data.domain, schema_data.name, schema_data.version, raw_json))
 
     def __fill_placeholders(self, template):
-        template = template.replace("{{endpoint}}:{{port}}", "{{base}}/{{prefix}}")
+        template = template.replace("{{endpoint}}:{{port}}", "{{base}}")
         # in our structure, the port is already included within the host string -
         # to make sure we don't have any broken namespaces, we have to remove it from the template
         template = template.replace(":{{port}}", "")
