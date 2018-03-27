@@ -72,7 +72,7 @@ class DataUploadUtils(object):
             schema_data = SchemaOrContextData.by_filepath(file_path, content)
             return creation_function(schema_data, force_domain_creation, update_if_already_exists, publish)
 
-    def create_instance_by_file(self, file_path):
+    def create_instance_by_file(self, file_path, fail_if_linked_instance_is_missing=True):
         """Create a new instance for the provided data
 
         Arguments:
@@ -81,7 +81,7 @@ class DataUploadUtils(object):
         """
         with open(os.path.abspath(file_path)) as metadata_file:
             file_content = metadata_file.read()
-            raw_json = self.__resolve_entities(file_content)
+            raw_json = self.__resolve_entities(file_content, fail_if_linked_instance_is_missing)
             raw_json = self.__fill_placeholders(raw_json)
             fully_qualified_json = Entity.fully_qualify(json.loads(raw_json))
             if not self._upload_fully_qualified:
@@ -125,7 +125,7 @@ class DataUploadUtils(object):
         template = template.replace(":{{port}}", "")
         return pystache.render(template, base="{}/{}".format(self._client.config.NEXUS_NAMESPACE, self._client.config.NEXUS_PREFIX), prefix=self._client.config.NEXUS_PREFIX)
 
-    def __resolve_identifier(self, match):
+    def __resolve_identifier(self, match, fail_if_linked_instance_is_missing):
         if match in self._id_cache:
             LOGGER.debug("resolved %s from cache", match)
             return self._id_cache.get(match)
@@ -137,15 +137,21 @@ class DataUploadUtils(object):
                 self._id_cache[match] = result
                 return result
             else:
-                raise ValueError("No entities found for " + match)
+                if fail_if_linked_instance_is_missing:
+                    raise ValueError("No entities found for " + match)
+                else:
+                    LOGGER.error("No entities found for "+match)
+                    return None
 
-    def __resolve_entities(self, template):
+    def __resolve_entities(self, template, fail_if_linked_instance_is_missing):
         matches = re.findall(r"(?<=\{\{resolve ).*(?=\}\})", template)
         for match in matches:
-            template = template.replace("\"{{resolve " + match + "}}\"", "{{ \"@id\": \"{}\"}}".format(self.__resolve_identifier(match)))
+            replacement = self.__resolve_identifier(match, fail_if_linked_instance_is_missing)
+            template = template.replace("\"{{resolve " + match + "}}\"", "{{ \"@id\": \"{}\"}}".format(replacement if replacement is not None else ""))
         matches = re.findall(r"(?<=\{\{resolve_id ).*(?=\}\})", template)
         for match in matches:
-            template = template.replace("{{resolve_id " + match + "}}", self.__resolve_identifier(match))
+            replacement = self.__resolve_identifier(match, fail_if_linked_instance_is_missing)
+            template = template.replace("{{resolve_id " + match + "}}", replacement if replacement is not None else "")
         return template
 
     def clear_all_checksums(self, path):
