@@ -104,7 +104,7 @@ class DataUploadUtils(object):
                 identifier = fully_qualified_json.get(schema_identifier)
                 if isinstance(identifier, list):
                     identifier = identifier[0]
-                found_instances = self._client.instances.find_by_field(instance.id, schema_identifier, identifier)
+                found_instances = self._client.instances.find_by_field(instance.id, schema_identifier, identifier, resolved=True)
                 if found_instances and found_instances.results:
                     found_instance = found_instances.results[0]
                     existing_hashcode = found_instance.data[hashcode_field] if hashcode_field in found_instance.data else None
