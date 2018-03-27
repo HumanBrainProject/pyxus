@@ -108,7 +108,7 @@ class DataUploadUtils(object):
                 if found_instances and found_instances.results:
                     found_instance = found_instances.results[0]
                     existing_hashcode = found_instance.data[hashcode_field] if hashcode_field in found_instance.data else None
-                    instance.path = found_instance.self_link
+                    instance.path = found_instance.get_self_link()
                     instance.id = Instance.extract_id_from_url(instance.path, instance.root_path)
                     if existing_hashcode is None or existing_hashcode != current_hashcode:
                         result = self._client.instances.update(instance)

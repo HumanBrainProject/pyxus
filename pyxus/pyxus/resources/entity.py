@@ -126,6 +126,8 @@ class Entity(object):
             return self.data.get("http://schema.org/identifier")
         return None
 
+    def get_self_link(self):
+        return self.data["@id"]
 
 class Organization(Entity):
     path = "/organizations"
