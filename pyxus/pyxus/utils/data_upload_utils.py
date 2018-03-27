@@ -14,6 +14,7 @@
 
 
 import fnmatch
+import hashlib
 import json
 import logging
 import os
@@ -89,25 +90,31 @@ class DataUploadUtils(object):
                 final_json = fully_qualified_json
             schema_data = SchemaOrContextData.by_filepath(file_path, final_json)
             schema_identifier = "http://schema.org/identifier"
+            hashcode_field = "http://hbp.eu/internal#hashcode"
             if self._upload_fully_qualified:
                 raw_json = final_json
             instance = Instance.create_new(schema_data.organization, schema_data.domain, schema_data.name, schema_data.version, raw_json)
+            if hashcode_field not in fully_qualified_json:
+                current_hashcode = hashlib.md5(json.dumps(fully_qualified_json)).hexdigest()
+                fully_qualified_json[hashcode_field] = current_hashcode
+                instance.data[hashcode_field] = current_hashcode
+            else:
+                current_hashcode = fully_qualified_json[hashcode_field]
             if schema_identifier in fully_qualified_json:
-                checksum = instance.get_checksum()
-                checksum_file = "{}.{}.chksum".format(file_path, checksum)
-                if os.path.exists(checksum_file):
-                    LOGGER.debug("%s is unchanged - no upload required", file_path)
-                    return None
                 identifier = fully_qualified_json.get(schema_identifier)
                 if isinstance(identifier, list):
                     identifier = identifier[0]
                 found_instances = self._client.instances.find_by_field(instance.id, schema_identifier, identifier)
                 if found_instances and found_instances.results:
-                    instance.path = found_instances.results[0].self_link
+                    found_instance = found_instances.results[0]
+                    existing_hashcode = found_instance.data[hashcode_field] if hashcode_field in found_instance.data else None
+                    instance.path = found_instance.self_link
                     instance.id = Instance.extract_id_from_url(instance.path, instance.root_path)
-                    result = self._client.instances.update(instance)
-                    with open(checksum_file, 'a') as checksum_file:
-                        checksum_file.close()
+                    if existing_hashcode is None or existing_hashcode != current_hashcode:
+                        result = self._client.instances.update(instance)
+                    else:
+                        LOGGER.info("Skipping instance {} because it already exists".format(instance.path))
+                        result = instance
                     return result
             return self._client.instances.create(Instance.create_new(schema_data.organization, schema_data.domain, schema_data.name, schema_data.version, raw_json))
 
