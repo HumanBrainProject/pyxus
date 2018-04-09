@@ -14,11 +14,12 @@
 
 
 import logging
-from abc import abstractmethod
 import re
 import codecs
 
-from pyxus.resources.entity import Organization, Domain, Schema, Instance, Context, Entity, SearchResult, SearchResultList
+from abc import abstractmethod
+from pyxus.resources.entity import Context, Domain, Entity, Instance, Organization
+from pyxus.resources.entity import SearchResult, SearchResultList, Schema
 
 LOGGER = logging.getLogger(__package__)
 
@@ -83,18 +84,20 @@ class Repository(object):
         identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
         return self.constructor(identifier, search_result.data["source"], self.path) if isinstance(search_result.data, dict) and "source" in search_result.data else None
 
-    def list_by_full_subpath(self, subpath, resolved=False):
+    def list_by_full_subpath(self, subpath, resolved=False, deprecated=False):
         if not subpath.startswith('/'):
             subpath = u"/{}".format(subpath)
         if resolved:
             path = "{path}{subpath}&fields=all".format(path=self.path, subpath=subpath or '')
         else:
             path = "{path}{subpath}".format(path=self.path, subpath=subpath or '')
-        return self.list_by_full_path(path)
+        return self.list_by_full_path(path, deprecated)
 
-    def list_by_full_path(self, path):
+    def list_by_full_path(self, path, deprecated=False):
         path = decode_escapes(path)
         resolved = "fields=all" in path
+        deprecated = "deprecated={}".format(deprecated) if deprecated is not None else ''
+        path = "{path}&{deprecated}".format(path=path, deprecated=deprecated)
         result = self._http_client.get(path)
         if result is not None:
             results = [SearchResult(r) for r in result["results"]]
