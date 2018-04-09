@@ -1,5 +1,24 @@
-# v0.2.0
+# Unreleased
 - support deprecated flag in list_by_full_path and list_by_full_sub_path with False by default
+- correct lint errors
+- move to openid_client
+- correct use of upload_fully_qualified flag
+- identifier is recognized even in non fully qualified upload scenario
+- pass alternative endpoint to http client to allow authorized access
+- base is replaced by namespace to ensure contexts and resources are resolvable
+- introduce hashcode for update checks
+- provide entities self link and use it in upload utils
+- instance creation failure in case of link missing is optional
+
+
+# v0.2.0
+- correct file structure
+- add pylint support
+- add pypi deployment on test server
+- tests update and cleanups
+- add code coverage report
+- license header correction
+
 
 # v0.1.3
 - fix wrong endpoint when defining without env variables

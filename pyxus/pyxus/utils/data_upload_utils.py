@@ -33,7 +33,7 @@ LOGGER = logging.getLogger(__package__)
 
 def recursive_find_matching(root_path, pattern):
     matches = []
-    for root, dirnames, filenames in os.walk(root_path):
+    for root, _, filenames in os.walk(root_path):
         for filename in fnmatch.filter(filenames, pattern):
             matches.append(os.path.join(root, filename))
 
@@ -54,7 +54,8 @@ class DataUploadUtils(object):
     def create_context_by_file(self, file_path, force_domain_creation=False, update_if_already_exists=False, publish=False):
         return self.__create_schema_or_context_by_file(self._create_context, file_path, force_domain_creation, update_if_already_exists, publish)
 
-    def __create_schema_or_context_by_file(self, creation_function, file_path, force_domain_creation=False, update_if_already_exists=False, publish=False):
+    def __create_schema_or_context_by_file(self, creation_function, file_path,
+                                           force_domain_creation=False, update_if_already_exists=False, publish=False):
         """Create a new schema or context or revise an existing.
 
         Arguments:
@@ -77,7 +78,8 @@ class DataUploadUtils(object):
 
         Arguments:
             file_path -- path to the location of the file to be uploaded as instance
-            fully_qualify -- if True, prefixes are resolved and the JSON-LD to be uploaded will be interpretable as JSON (but with non-human-friendly, fully qualified keys)
+            fully_qualify -- if True, prefixes are resolved and the JSON-LD to be uploaded will be interpretable as JSON
+                             (but with non-human-friendly, fully qualified keys)
         """
         with open(os.path.abspath(file_path)) as metadata_file:
             file_content = metadata_file.read()
@@ -102,28 +104,38 @@ class DataUploadUtils(object):
                 current_hashcode = fully_qualified_json[hashcode_field]
             if schema_identifier in fully_qualified_json:
                 identifier = fully_qualified_json.get(schema_identifier)
-                if isinstance(identifier, list):
-                    identifier = identifier[0]
-                found_instances = self._client.instances.find_by_field(instance.id, schema_identifier, identifier, resolved=True)
-                if found_instances and found_instances.results:
-                    found_instance = found_instances.results[0]
-                    existing_hashcode = found_instance.data[hashcode_field] if hashcode_field in found_instance.data else None
-                    instance.path = found_instance.get_self_link()
-                    instance.id = Instance.extract_id_from_url(instance.path, instance.root_path)
-                    if existing_hashcode is None or existing_hashcode != current_hashcode:
-                        result = self._client.instances.update(instance)
-                    else:
-                        LOGGER.info("Skipping instance {} because it already exists".format(instance.path))
-                        result = instance
+                result = self.handle_known_schema_identifier(schema_identifier, instance, hashcode_field, current_hashcode, identifier)
+                if result is not None:
                     return result
-            return self._client.instances.create(Instance.create_new(schema_data.organization, schema_data.domain, schema_data.name, schema_data.version, raw_json))
+
+            return self._client.instances.create(Instance.create_new(schema_data.organization, schema_data.domain,
+                                                                     schema_data.name, schema_data.version, raw_json))
+
+    def handle_known_schema_identifier(self, schema_identifier, instance, hashcode_field, current_hashcode, identifier):
+        if isinstance(identifier, list):
+            identifier = identifier[0]
+        found_instances = self._client.instances.find_by_field(instance.id, schema_identifier, identifier, resolved=True)
+        if found_instances and found_instances.results:
+            found_instance = found_instances.results[0]
+            existing_hashcode = found_instance.data[hashcode_field] if hashcode_field in found_instance.data else None
+            instance.path = found_instance.get_self_link()
+            instance.id = Instance.extract_id_from_url(instance.path, instance.root_path)
+            if existing_hashcode is None or existing_hashcode != current_hashcode:
+                result = self._client.instances.update(instance)
+            else:
+                LOGGER.info("Skipping instance %s because it already exists", instance.path)
+                result = instance
+            return result
+        return None
 
     def __fill_placeholders(self, template):
         template = template.replace("{{endpoint}}:{{port}}/{{prefix}}", "{{base}}")
         # in our structure, the port is already included within the host string -
         # to make sure we don't have any broken namespaces, we have to remove it from the template
         template = template.replace(":{{port}}", "")
-        return pystache.render(template, base="{}/{}".format(self._client.config.NEXUS_NAMESPACE, self._client.config.NEXUS_PREFIX), prefix=self._client.config.NEXUS_PREFIX)
+        return pystache.render(template, base="{}/{}".format(
+            self._client.config.NEXUS_NAMESPACE,
+            self._client.config.NEXUS_PREFIX), prefix=self._client.config.NEXUS_PREFIX)
 
     def __resolve_identifier(self, match, fail_if_linked_instance_is_missing):
         if match in self._id_cache:
@@ -140,21 +152,23 @@ class DataUploadUtils(object):
                 if fail_if_linked_instance_is_missing:
                     raise ValueError("No entities found for " + match)
                 else:
-                    LOGGER.error("No entities found for "+match)
+                    LOGGER.error("No entities found for %s", match)
                     return None
 
     def __resolve_entities(self, template, fail_if_linked_instance_is_missing):
         matches = re.findall(r"(?<=\{\{resolve ).*(?=\}\})", template)
         for match in matches:
             replacement = self.__resolve_identifier(match, fail_if_linked_instance_is_missing)
-            template = template.replace("\"{{resolve " + match + "}}\"", "{{ \"@id\": \"{}\"}}".format(replacement if replacement is not None else ""))
+            template = template.replace("\"{{resolve " + match + "}}\"", "{{ \"@id\": \"{}\"}}".format(
+                replacement if replacement is not None else ""))
         matches = re.findall(r"(?<=\{\{resolve_id ).*(?=\}\})", template)
         for match in matches:
             replacement = self.__resolve_identifier(match, fail_if_linked_instance_is_missing)
             template = template.replace("{{resolve_id " + match + "}}", replacement if replacement is not None else "")
         return template
 
-    def clear_all_checksums(self, path):
+    @staticmethod
+    def clear_all_checksums(path):
         for match in recursive_find_matching(path, "*.chksum"):
             os.remove(match)
 
@@ -166,11 +180,13 @@ class DataUploadUtils(object):
 
     def _create_schema(self, data, force_domain_creation, update_if_already_exists, publish):
         entity = Schema.create_new(data.organization, data.domain, data.name, data.version, data.content)
-        return self._create_schema_or_context("schema", self._client.schemas, entity, data, force_domain_creation, update_if_already_exists, publish)
+        return self._create_schema_or_context("schema", self._client.schemas, entity, data, force_domain_creation,
+                                              update_if_already_exists, publish)
 
     def _create_context(self, data, force_domain_creation, update_if_already_exists, publish):
         entity = Context.create_new(data.organization, data.domain, data.name, data.version, data.content)
-        return self._create_schema_or_context("context", self._client.contexts, entity, data, force_domain_creation, update_if_already_exists, publish)
+        return self._create_schema_or_context("context", self._client.contexts, entity, data, force_domain_creation,
+                                              update_if_already_exists, publish)
 
     def _create_schema_or_context(self, text, repository, entity, data, force_domain_creation, update_if_already_exists, publish):
         try:
@@ -191,11 +207,13 @@ class DataUploadUtils(object):
         elif update_if_already_exists:
             if schema_or_context.is_published():
                 raise NexusException("Can not update the already published {} {}".format(text, data.name))
-            schema_or_context = self._client.schemas.update(data.organization, data.domain, data.name, data.version, data.content, schema_or_context.get_revision())
+            schema_or_context = self._client.schemas.update(data.organization, data.domain, data.name, data.version,
+                                                            data.content, schema_or_context.get_revision())
         data.revision = schema_or_context.get_revision()
         if publish and data.revision and not schema_or_context.is_published():
             repository.publish(schema_or_context, True, data.revision)
         return data
 
-    def _process_content(self, content):
+    @staticmethod
+    def _process_content(content):
         return content

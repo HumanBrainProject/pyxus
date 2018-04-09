@@ -18,8 +18,7 @@ import re
 import codecs
 
 from abc import abstractmethod
-from pyxus.resources.entity import Context, Domain, Entity, Instance, Organization
-from pyxus.resources.entity import SearchResult, SearchResultList, Schema
+from pyxus.resources.entity import Context, Domain, Entity, Instance, Organization, SearchResult, SearchResultList, Schema
 
 LOGGER = logging.getLogger(__package__)
 
@@ -82,7 +81,9 @@ class Repository(object):
 
     def _wrap_with_entity(self, search_result):
         identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
-        return self.constructor(identifier, search_result.data["source"], self.path) if isinstance(search_result.data, dict) and "source" in search_result.data else None
+        if isinstance(search_result.data, dict) and "source" in search_result.data:
+            return self.constructor(identifier, search_result.data["source"], self.path)
+        return None
 
     def list_by_full_subpath(self, subpath, resolved=False, deprecated=False):
         if not subpath.startswith('/'):
@@ -108,7 +109,6 @@ class Repository(object):
 
     def list(self, resolved=False, subpath=None, full_text_query=None, filter_query=None, from_index=None, size=None, deprecated=False):
         subpath = "{subpath}/?{full_text_search_query}&{filter}&{from_index}&{size}&{deprecated}".format(
-            path=self.path,
             subpath=subpath or '',
             full_text_search_query="q={}".format(full_text_query) if full_text_query is not None else '',
             filter="filter={}".format(filter_query) if filter_query is not None else '',
@@ -155,7 +155,12 @@ class Repository(object):
             subpath = u"/{}".format(subpath)
         else:
             subpath = ""
-        path = "{path}{subpath}/?&q={query}&{deprecated}".format(path=self.path, subpath=subpath, query=value, deprecated="deprecated={}".format(deprecated) if deprecated is not None else '')
+        path = "{path}{subpath}/?&q={query}&{deprecated}".format(
+            path=self.path,
+            subpath=subpath,
+            query=value,
+            deprecated="deprecated={}".format(deprecated) if deprecated is not None else ''
+        )
         if resolved:
             path += "&fields=all"
         result = self._http_client.get(path)
@@ -266,8 +271,10 @@ class InstanceRepository(Repository):
         data = self._read(identifier)
         return Instance(identifier, data, self.path) if data is not None else None
 
-    def list_by_schema(self, organization, domain, schema, version, resolved=False, full_text_query=None, filter_query=None, from_index=None, size=None, deprecated=False):
-        return self.list(subpath="/{}/{}/{}/{}".format(organization, domain, schema, version), resolved=resolved, full_text_query=full_text_query, filter_query=filter_query,
+    def list_by_schema(self, organization, domain, schema, version, resolved=False, full_text_query=None, filter_query=None,
+                       from_index=None, deprecated=False):
+        return self.list(subpath="/{}/{}/{}/{}".format(organization, domain, schema, version),
+                         resolved=resolved, full_text_query=full_text_query, filter_query=filter_query,
                          from_index=from_index, deprecated=deprecated)
 
 

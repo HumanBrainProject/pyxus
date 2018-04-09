@@ -30,8 +30,15 @@ class BlazegraphClient(object):
     """
 
     def __init__(self, blazegraph_endpoint=None, nexus_namespace=None):
-        self.BLAZEGRAPH_ENDPOINT = os.environ.get(ENV_VAR_BLAZEGRAPH) if blazegraph_endpoint is None and ENV_VAR_BLAZEGRAPH in os.environ else blazegraph_endpoint
-        self.NEXUS_NAMESPACE = os.environ.get(ENV_VAR_NEXUS_NAMESPACE) if nexus_namespace is None and ENV_VAR_NEXUS_NAMESPACE in os.environ else nexus_namespace
+        if blazegraph_endpoint is None and ENV_VAR_BLAZEGRAPH in os.environ:
+            self.BLAZEGRAPH_ENDPOINT = os.environ.get(ENV_VAR_BLAZEGRAPH)
+        else:
+            self.BLAZEGRAPH_ENDPOINT = blazegraph_endpoint
+        if nexus_namespace is None and ENV_VAR_NEXUS_NAMESPACE in os.environ:
+            self.NEXUS_NAMESPACE = os.environ.get(ENV_VAR_NEXUS_NAMESPACE)
+        else:
+            self.NEXUS_NAMESPACE = nexus_namespace
+
         if self.BLAZEGRAPH_ENDPOINT is None:
             raise ValueError("The Blazegraph endpoint is not set!")
         if self.NEXUS_NAMESPACE is None:
@@ -54,6 +61,7 @@ class BlazegraphClient(object):
                 content = json.loads(response.content)
                 if content:
                     return content["results"]["bindings"]
+                return None
         return None
 
     def _get_vocab(self):
