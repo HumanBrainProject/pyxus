@@ -17,10 +17,10 @@ import logging
 from abc import abstractmethod
 import re
 
-
 from pyxus.resources.entity import Organization, Domain, Schema, Instance, Context, Entity, SearchResult, SearchResultList
 
 LOGGER = logging.getLogger(__package__)
+
 
 class Repository(object):
 
@@ -30,13 +30,13 @@ class Repository(object):
         self.constructor = constructor
 
     def create(self, entity):
-        logging.debug("Creating entity: {}".format(entity))
+        logging.debug("Creating entity: %s", entity)
         result = self._http_client.put(entity.path, entity.data)
         entity.data = result
         return entity
 
     def update(self, entity):
-        logging.debug("Updating entity: {}".format(entity))
+        logging.debug("Updating entity: %s", entity)
         revision = entity.get_revision()
         if revision is None:
             revision = self._get_last_revision(entity.id)
@@ -48,7 +48,7 @@ class Repository(object):
         return entity
 
     def delete(self, entity, revision=None):
-        logging.debug("Deleting entity: {}".format(entity))
+        logging.debug("Deleting entity: %s", entity)
         if revision is None:
             revision = self._get_last_revision(entity.id)
         if not entity.is_deprecated():
@@ -73,7 +73,7 @@ class Repository(object):
 
     def _wrap_with_entity(self, search_result):
         identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
-        return self.constructor(identifier, search_result.data["source"], self.path) if type(search_result.data) is dict and "source" in search_result.data else None
+        return self.constructor(identifier, search_result.data["source"], self.path) if isinstance(search_result.data, dict) and "source" in search_result.data else None
 
     def list_by_full_subpath(self, subpath, resolved=False):
         if not subpath.startswith('/'):
@@ -107,13 +107,11 @@ class Repository(object):
         )
         return self.list_by_full_subpath(subpath, resolved)
 
-
     def _get_last_revision(self, identifier):
         current_revision = self._read(identifier)
         if current_revision is not None and "nxv:rev" in current_revision:
             return current_revision.get("nxv:rev") or 0
-        else:
-            return 0
+        return 0
 
     def resolve_all(self, search_result_list):
         return [self.resolve(search_result) for search_result in search_result_list.results]
@@ -126,10 +124,10 @@ class Repository(object):
             subpath = u"/{}".format(subpath)
         path = "{path}{subpath}/?&filter={{\"op\":\"eq\",\"path\":\"{field_path}\",\"value\":{value}}}&{deprecated}".format(
             path=self.path,
-            subpath = subpath,
+            subpath=subpath,
             field_path=field_path,
             deprecated="deprecated={}".format(deprecated) if deprecated is not None else '',
-            value=u"\"{}\"".format(value) if type(value) is str or type(value) is unicode else value
+            value=u"\"{}\"".format(value) if isinstance(value, (str, unicode)) else value
         )
         if resolved:
             path += "&fields=all"
@@ -145,12 +143,8 @@ class Repository(object):
         if subpath is not None and not subpath.startswith('/'):
             subpath = u"/{}".format(subpath)
         else:
-            subpath=""
-        path = "{path}{subpath}/?&q={query}&{deprecated}".format(path=self.path,
-            subpath=subpath,
-            query = value,
-            deprecated="deprecated={}".format(deprecated) if deprecated is not None else ''
-        )
+            subpath = ""
+        path = "{path}{subpath}/?&q={query}&{deprecated}".format(path=self.path, subpath=subpath, query=value, deprecated="deprecated={}".format(deprecated) if deprecated is not None else '')
         if resolved:
             path += "&fields=all"
         result = self._http_client.get(path)
@@ -252,7 +246,7 @@ class InstanceRepository(Repository):
         return Instance(full_id, data, self.path) if data is not None else None
 
     def read(self, organization, domain, schema, version, uuid, revision=None):
-        identifier = Instance.create_id(organization, domain, schema, version)+"/"+uuid
+        identifier = Instance.create_id(organization, domain, schema, version) + "/" + uuid
         data = self._read(identifier, revision)
         return Instance(identifier, data, self.path) if data is not None else None
 
@@ -262,7 +256,8 @@ class InstanceRepository(Repository):
         return Instance(identifier, data, self.path) if data is not None else None
 
     def list_by_schema(self, organization, domain, schema, version, resolved=False, full_text_query=None, filter_query=None, from_index=None, size=None, deprecated=False):
-        return self.list(subpath="/{}/{}/{}/{}".format(organization, domain, schema, version), resolved=resolved, full_text_query=full_text_query, filter_query=filter_query, from_index=from_index, deprecated=deprecated)
+        return self.list(subpath="/{}/{}/{}/{}".format(organization, domain, schema, version), resolved=resolved, full_text_query=full_text_query, filter_query=filter_query,
+                         from_index=from_index, deprecated=deprecated)
 
 
 class ContextRepository(Repository):
@@ -291,4 +286,3 @@ class ContextRepository(Repository):
         identifier = Entity.extract_id_from_url(search_result.self_link, self.path)
         data = self._read(identifier)
         return Context(identifier, data, self.path) if data is not None else None
-

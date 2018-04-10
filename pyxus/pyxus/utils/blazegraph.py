@@ -21,12 +21,14 @@ import requests
 from pyxus.client import ENV_VAR_NEXUS_NAMESPACE
 
 ENV_VAR_BLAZEGRAPH = "BLAZEGRAPH_ENDPOINT"
-XSD_URI="http://www.w3.org/2001/XMLSchema#"
+XSD_URI = "http://www.w3.org/2001/XMLSchema#"
+
 
 class BlazegraphClient(object):
     """
     Client to access Blazegraph SPARQL API
     """
+
     def __init__(self, blazegraph_endpoint=None, nexus_namespace=None):
         self.BLAZEGRAPH_ENDPOINT = os.environ.get(ENV_VAR_BLAZEGRAPH) if blazegraph_endpoint is None and ENV_VAR_BLAZEGRAPH in os.environ else blazegraph_endpoint
         self.NEXUS_NAMESPACE = os.environ.get(ENV_VAR_NEXUS_NAMESPACE) if nexus_namespace is None and ENV_VAR_NEXUS_NAMESPACE in os.environ else nexus_namespace
@@ -43,7 +45,8 @@ class BlazegraphClient(object):
         :return: the result from blazegraph
         """
         query = {'query': query}
-        response = requests.post("{}/{}".format(self.BLAZEGRAPH_ENDPOINT, "bigdata/namespace/kg/sparql"), data=query, headers={"Accept": "application/sparql-results+json", "Content-Type": "application/x-www-form-urlencoded"})
+        response = requests.post("{}/{}".format(self.BLAZEGRAPH_ENDPOINT, "bigdata/namespace/kg/sparql"), data=query,
+                                 headers={"Accept": "application/sparql-results+json", "Content-Type": "application/x-www-form-urlencoded"})
         if response.status_code == 200:
             if raw:
                 return response.content
@@ -51,8 +54,6 @@ class BlazegraphClient(object):
                 content = json.loads(response.content)
                 if content:
                     return content["results"]["bindings"]
-                else:
-                    return None
         return None
 
     def _get_vocab(self):
