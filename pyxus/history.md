@@ -1,4 +1,12 @@
 # Unreleased
+
+
+# v0.3.0
+## API changes
+- list_by_full_path considers deprecated = False by default
+- list_by_full_subpath considers deprecated = False by default
+
+## changes
 - support deprecated flag in list_by_full_path and list_by_full_sub_path with False by default
 - correct lint errors
 - move to openid_client
