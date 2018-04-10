@@ -14,6 +14,7 @@
 
 
 import fnmatch
+import hashlib
 import json
 import logging
 import os
@@ -42,7 +43,7 @@ def recursive_find_matching(root_path, pattern):
 class DataUploadUtils(object):
     _client = None
 
-    def __init__(self,  nexus_client, upload_fully_qualified=True):
+    def __init__(self, nexus_client, upload_fully_qualified=True):
         self._client = nexus_client
         self._upload_fully_qualified = upload_fully_qualified
         self._id_cache = {}
@@ -71,7 +72,7 @@ class DataUploadUtils(object):
             schema_data = SchemaOrContextData.by_filepath(file_path, content)
             return creation_function(schema_data, force_domain_creation, update_if_already_exists, publish)
 
-    def create_instance_by_file(self, file_path, fully_qualify=False):
+    def create_instance_by_file(self, file_path, fail_if_linked_instance_is_missing=True):
         """Create a new instance for the provided data
 
         Arguments:
@@ -80,65 +81,77 @@ class DataUploadUtils(object):
         """
         with open(os.path.abspath(file_path)) as metadata_file:
             file_content = metadata_file.read()
-            raw_json = self.__resolve_entities(file_content)
+            raw_json = self.__resolve_entities(file_content, fail_if_linked_instance_is_missing)
             raw_json = self.__fill_placeholders(raw_json)
-            if fully_qualify:
-                final_json = Entity.fully_qualify(json.loads(raw_json))
+            fully_qualified_json = Entity.fully_qualify(json.loads(raw_json))
+            if not self._upload_fully_qualified:
+                final_json = json.loads(raw_json) if not isinstance(raw_json, dict) else raw_json
             else:
-                final_json = json.loads(raw_json) if type(raw_json) is not dict else raw_json
+                final_json = fully_qualified_json
             schema_data = SchemaOrContextData.by_filepath(file_path, final_json)
             schema_identifier = "http://schema.org/identifier"
+            hashcode_field = "http://hbp.eu/internal#hashcode"
             if self._upload_fully_qualified:
                 raw_json = final_json
             instance = Instance.create_new(schema_data.organization, schema_data.domain, schema_data.name, schema_data.version, raw_json)
-            if schema_identifier in final_json:
-                checksum = instance.get_checksum()
-                checksum_file = "{}.{}.chksum".format(file_path, checksum)
-                if os.path.exists(checksum_file):
-                    LOGGER.debug("{} is unchanged - no upload required".format(file_path))
-                    return
-                identifier=final_json.get(schema_identifier)
-                if type(identifier) is list:
+            if hashcode_field not in fully_qualified_json:
+                current_hashcode = hashlib.md5(json.dumps(fully_qualified_json)).hexdigest()
+                fully_qualified_json[hashcode_field] = current_hashcode
+                instance.data[hashcode_field] = current_hashcode
+            else:
+                current_hashcode = fully_qualified_json[hashcode_field]
+            if schema_identifier in fully_qualified_json:
+                identifier = fully_qualified_json.get(schema_identifier)
+                if isinstance(identifier, list):
                     identifier = identifier[0]
-                found_instances = self._client.instances.find_by_field(instance.id, schema_identifier, identifier)
-                if found_instances and len(found_instances.results)>0:
-                    instance.path = found_instances.results[0].self_link
+                found_instances = self._client.instances.find_by_field(instance.id, schema_identifier, identifier, resolved=True)
+                if found_instances and found_instances.results:
+                    found_instance = found_instances.results[0]
+                    existing_hashcode = found_instance.data[hashcode_field] if hashcode_field in found_instance.data else None
+                    instance.path = found_instance.get_self_link()
                     instance.id = Instance.extract_id_from_url(instance.path, instance.root_path)
-                    result = self._client.instances.update(instance)
-                    with open(checksum_file, 'a') as checksum_file:
-                        checksum_file.close()
+                    if existing_hashcode is None or existing_hashcode != current_hashcode:
+                        result = self._client.instances.update(instance)
+                    else:
+                        LOGGER.info("Skipping instance {} because it already exists".format(instance.path))
+                        result = instance
                     return result
             return self._client.instances.create(Instance.create_new(schema_data.organization, schema_data.domain, schema_data.name, schema_data.version, raw_json))
 
     def __fill_placeholders(self, template):
-        template = template.replace("{{base}}", "{{endpoint}}:{{port}}/{{prefix}}")
+        template = template.replace("{{endpoint}}:{{port}}/{{prefix}}", "{{base}}")
         # in our structure, the port is already included within the host string -
         # to make sure we don't have any broken namespaces, we have to remove it from the template
         template = template.replace(":{{port}}", "")
-        return pystache.render(template, endpoint=self._client.config.NEXUS_ENDPOINT, prefix=self._client.config.NEXUS_PREFIX)
+        return pystache.render(template, base="{}/{}".format(self._client.config.NEXUS_NAMESPACE, self._client.config.NEXUS_PREFIX), prefix=self._client.config.NEXUS_PREFIX)
 
-
-    def __resolve_identifier(self, match):
+    def __resolve_identifier(self, match, fail_if_linked_instance_is_missing):
         if match in self._id_cache:
-            LOGGER.debug("resolved {} from cache".format(match))
+            LOGGER.debug("resolved %s from cache", match)
             return self._id_cache.get(match)
         else:
             result_list = self._client.instances.list_by_full_subpath(match + "&deprecated=false")
-            if result_list is not None and len(result_list.results) > 0:
+            if result_list is not None and result_list.results:
                 # TODO check - do we really want to select the first one if ambiguous?
                 result = result_list.results[0].result_id
                 self._id_cache[match] = result
                 return result
             else:
-                raise ValueError("No entities found for " + match)
+                if fail_if_linked_instance_is_missing:
+                    raise ValueError("No entities found for " + match)
+                else:
+                    LOGGER.error("No entities found for "+match)
+                    return None
 
-    def __resolve_entities(self, template):
-        matches = re.findall("(?<=\{\{resolve ).*(?=\}\})", template)
+    def __resolve_entities(self, template, fail_if_linked_instance_is_missing):
+        matches = re.findall(r"(?<=\{\{resolve ).*(?=\}\})", template)
         for match in matches:
-            template = template.replace("\"{{resolve "+match+"}}\"", "{{ \"@id\": \"{}\"}}".format(self.__resolve_identifier(match)))
-        matches = re.findall("(?<=\{\{resolve_id ).*(?=\}\})", template)
+            replacement = self.__resolve_identifier(match, fail_if_linked_instance_is_missing)
+            template = template.replace("\"{{resolve " + match + "}}\"", "{{ \"@id\": \"{}\"}}".format(replacement if replacement is not None else ""))
+        matches = re.findall(r"(?<=\{\{resolve_id ).*(?=\}\})", template)
         for match in matches:
-            template = template.replace("{{resolve_id " + match + "}}", self.__resolve_identifier(match))
+            replacement = self.__resolve_identifier(match, fail_if_linked_instance_is_missing)
+            template = template.replace("{{resolve_id " + match + "}}", replacement if replacement is not None else "")
         return template
 
     def clear_all_checksums(self, path):

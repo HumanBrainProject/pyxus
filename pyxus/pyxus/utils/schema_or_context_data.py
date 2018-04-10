@@ -22,13 +22,13 @@ class SchemaOrContextData(object):
 
     @staticmethod
     def _recursively_check_for_this(json_element):
-        if type(json_element) is list:
+        if isinstance(json_element, list):
             for item in json_element:
-                if type(item) is dict:
+                if isinstance(item, dict):
                     result = SchemaOrContextData._recursively_check_for_this(item)
                     if result is not None:
                         return result
-        elif type(json_element) is dict and 'this' in json_element:
+        elif isinstance(json_element, dict) and 'this' in json_element:
             return json_element['this']
         return None
 
@@ -37,18 +37,16 @@ class SchemaOrContextData(object):
         dirname = os.path.dirname(filepath)
         split = os.path.split(dirname)
         try:
-            version = re.search("v\d*\.\d*\.\d*", os.path.basename(filepath)).group(0)
+            version = re.search(r"v\d*\.\d*\.\d*", os.path.basename(filepath)).group(0)
         except:
-            version=split[1]
+            version = split[1]
             split = os.path.split(split[0])
-        name=split[1]
+        name = split[1]
         split = os.path.split(split[0])
         domain = split[1]
         split = os.path.split(split[0])
         organization = split[1]
         return SchemaOrContextData(organization, domain, name, version, content)
-
-
 
     def __init__(self, organization, domain, name, version, content):
         self.organization = self._normalize_identifier(organization)
@@ -60,7 +58,6 @@ class SchemaOrContextData(object):
     @staticmethod
     def _normalize_identifier(identifier):
         return re.sub('[/#]', '', identifier)
-
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
