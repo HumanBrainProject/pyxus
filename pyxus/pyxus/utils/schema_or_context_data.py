@@ -37,7 +37,12 @@ class SchemaOrContextData(object):
         dirname = os.path.dirname(filepath)
         split = os.path.split(dirname)
         try:
-            version = re.search(r"v\d*\.\d*\.\d*", os.path.basename(filepath)).group(0)
+            version_in_filename = re.search(r"v\d*\.\d*\.\d*", os.path.basename(filepath))
+            if version_in_filename:
+                version = version_in_filename.group(0)
+            else:
+                version = split[1]
+                split = os.path.split(split[0])
         except re.error:
             version = split[1]
             split = os.path.split(split[0])
