@@ -83,7 +83,7 @@ class DataUploadUtils(object):
         """
         with open(os.path.abspath(file_path)) as metadata_file:
             file_content = metadata_file.read()
-            raw_json = self.__resolve_entities(file_content, fail_if_linked_instance_is_missing)
+            raw_json = self.resolve_entities(file_content, fail_if_linked_instance_is_missing)
             raw_json = self.__fill_placeholders(raw_json)
             fully_qualified_json = Entity.fully_qualify(json.loads(raw_json))
             if not self._upload_fully_qualified:
@@ -137,7 +137,7 @@ class DataUploadUtils(object):
             self._client.config.NEXUS_NAMESPACE,
             self._client.config.NEXUS_PREFIX), prefix=self._client.config.NEXUS_PREFIX)
 
-    def __resolve_identifier(self, match, fail_if_linked_instance_is_missing):
+    def resolve_identifier(self, match, fail_if_linked_instance_is_missing):
         if match in self._id_cache:
             LOGGER.debug("resolved %s from cache", match)
             return self._id_cache.get(match)
@@ -155,15 +155,15 @@ class DataUploadUtils(object):
                     LOGGER.error("No entities found for %s", match)
                     return None
 
-    def __resolve_entities(self, template, fail_if_linked_instance_is_missing):
-        matches = re.findall(r"(?<=\{\{resolve ).*(?=\}\})", template)
+    def resolve_entities(self, template, fail_if_linked_instance_is_missing):
+        matches = re.findall(r"(?<=\{\{resolve ).*?\}(?=\}\})", template)
         for match in matches:
-            replacement = self.__resolve_identifier(match, fail_if_linked_instance_is_missing)
+            replacement = self.resolve_identifier(match, fail_if_linked_instance_is_missing)
             template = template.replace("\"{{resolve " + match + "}}\"", "{{ \"@id\": \"{}\"}}".format(
                 replacement if replacement is not None else ""))
-        matches = re.findall(r"(?<=\{\{resolve_id ).*(?=\}\})", template)
+        matches = re.findall(r"(?<=\{\{resolve_id ).*?\}(?=\}\})", template)
         for match in matches:
-            replacement = self.__resolve_identifier(match, fail_if_linked_instance_is_missing)
+            replacement = self.resolve_identifier(match, fail_if_linked_instance_is_missing)
             template = template.replace("{{resolve_id " + match + "}}", replacement if replacement is not None else "")
         return template
 
