@@ -24,3 +24,4 @@ deploy:
   on:
     branch: master
     tags: true
+    condition: "$TRAVIS_BRANCH =~ ^release/v[0-9]*\\.[0-9]*$ && $TRAVIS_PYTHON_VERSION == 2.7"
