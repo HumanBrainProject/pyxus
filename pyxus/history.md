@@ -1,5 +1,8 @@
 # Unreleased
 
+# v0.3.1
+- Bugfix for multiple resolve items in one JSON
+- Bugfix for version numbers as part of the directory structure
 
 # v0.3.0
 ## API changes
