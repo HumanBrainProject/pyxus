@@ -98,7 +98,7 @@ class Repository(object):
         path = decode_escapes(path)
         resolved = "fields=all" in path
         deprecated = "deprecated={}".format(deprecated) if deprecated is not None else ''
-        path = "{path}&{deprecated}".format(path=path, deprecated=deprecated)
+        path = "{path}&{deprecated}".format(path=path, deprecated=deprecated) if '?' in path else "{path}?{deprecated}".format(path=path, deprecated=deprecated)
         result = self._http_client.get(path)
         if result is not None:
             results = [SearchResult(r) for r in result["results"]]
