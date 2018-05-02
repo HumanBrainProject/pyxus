@@ -26,7 +26,7 @@ else:
 
 setup(
     name='pyxus',
-    version='0.3.1',
+    version='0.3.2',
     packages=['pyxus', 'pyxus.resources', 'pyxus.utils'],
     install_requires = ['pyld', 'rdflib', 'pystache', 'openid_http_client', 'rdflib-jsonld'],
     author='HumanBrainProject',

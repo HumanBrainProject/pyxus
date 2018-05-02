@@ -1,5 +1,8 @@
 # Unreleased
 
+# v0.3.2
+- Bugfix Added question mark in query parameter if needed
+
 # v0.3.1
 - Bugfix for multiple resolve items in one JSON
 - Bugfix for version numbers as part of the directory structure
