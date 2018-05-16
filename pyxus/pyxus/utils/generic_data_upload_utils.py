@@ -44,7 +44,7 @@ class GenericDataUploadUtils(object):
                              (but with non-human-friendly, fully qualified keys)
         """
         raw_json = self.resolve_entities(data if not isinstance(data, dict) else json.dumps(data), fail_if_linked_instance_is_missing)
-        raw_json = self.__fill_placeholders(raw_json)
+        raw_json = self._fill_placeholders(raw_json)
         fully_qualified_json = Entity.fully_qualify(json.loads(raw_json))
         if not self._upload_fully_qualified:
             final_json = json.loads(raw_json) if not isinstance(raw_json, dict) else raw_json
@@ -85,7 +85,7 @@ class GenericDataUploadUtils(object):
             return result
         return None
 
-    def __fill_placeholders(self, template):
+    def _fill_placeholders(self, template):
         template = template.replace("{{endpoint}}:{{port}}/{{prefix}}", "{{base}}")
         # in our structure, the port is already included within the host string -
         # to make sure we don't have any broken namespaces, we have to remove it from the template

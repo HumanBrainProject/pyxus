@@ -57,7 +57,7 @@ class DataUploadUtils(GenericDataUploadUtils):
         with open(file_path) as x:
             file_content = x.read()
             file_content = self._process_content(file_content)
-            raw_content = self.__fill_placeholders(file_content)
+            raw_content = self._fill_placeholders(file_content)
             content = json.loads(raw_content)
             schema_data = SchemaOrContextData.by_filepath(file_path, content)
             return creation_function(schema_data, force_domain_creation, update_if_already_exists, publish)
