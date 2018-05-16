@@ -107,11 +107,12 @@ class Repository(object):
             return SearchResultList(result["total"], results, result["links"])
         return None
 
-    def list(self, resolved=False, subpath=None, full_text_query=None, filter_query=None, from_index=None, size=None, deprecated=False):
-        subpath = "{subpath}/?{full_text_search_query}&{filter}&{from_index}&{size}&{deprecated}".format(
+    def list(self, resolved=False, subpath=None, full_text_query=None, filter_query=None, from_index=None, size=None, deprecated=False, context=None):
+        subpath = "{subpath}/?{full_text_search_query}&{filter}&{context}&{from_index}&{size}&{deprecated}".format(
             subpath=subpath or '',
             full_text_search_query="q={}".format(full_text_query) if full_text_query is not None else '',
             filter="filter={}".format(filter_query) if filter_query is not None else '',
+            context="context={}".format(context) if context is not None else '',
             from_index="from={}".format(from_index) if from_index is not None else '',
             size="size={}".format(size) if size is not None else '',
             deprecated="deprecated={}".format(deprecated) if deprecated is not None else ''
@@ -272,10 +273,10 @@ class InstanceRepository(Repository):
         return Instance(identifier, data, self.path) if data is not None else None
 
     def list_by_schema(self, organization, domain, schema, version, resolved=False, full_text_query=None, filter_query=None,
-                       from_index=None, deprecated=False):
+                       from_index=None, size=None, deprecated=False):
         return self.list(subpath="/{}/{}/{}/{}".format(organization, domain, schema, version),
                          resolved=resolved, full_text_query=full_text_query, filter_query=filter_query,
-                         from_index=from_index, deprecated=deprecated)
+                         from_index=from_index, size=size, deprecated=deprecated)
 
 
 class ContextRepository(Repository):
