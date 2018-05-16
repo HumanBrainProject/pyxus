@@ -1,5 +1,8 @@
 # Unreleased
 
+# v0.4.0
+- Generalize the data upload utils to be usable in-memory
+
 # v0.3.2
 - Bugfix Added question mark in query parameter if needed
 
