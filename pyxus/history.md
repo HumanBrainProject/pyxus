@@ -1,5 +1,9 @@
 # Unreleased
 
+# v0.4.2
+- Enabled support for context in list method
+- Enabled support for size in list_by_schema
+
 # v0.4.1
 - Generalize the data upload utils to be usable in-memory
 
