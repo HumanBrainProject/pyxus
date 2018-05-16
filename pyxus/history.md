@@ -1,6 +1,6 @@
 # Unreleased
 
-# v0.4.0
+# v0.4.1
 - Generalize the data upload utils to be usable in-memory
 
 # v0.3.2
