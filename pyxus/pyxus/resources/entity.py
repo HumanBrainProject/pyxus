@@ -119,7 +119,7 @@ class Entity(object):
         raise ValueError("\"{url}\" is not applicable to {root_path}!".format(url=url, root_path=root_path))
 
     def is_deprecated(self):
-        return self.data.get("nxv:deprecated") != False
+        return self.data.get("nxv:deprecated") != False if "nxv:deprecated" in self.data else False
 
     def get_identifier(self):
         if "http://schema.org/identifier" in self.data:

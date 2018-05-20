@@ -1,5 +1,8 @@
 # Unreleased
 
+# v0.4.3
+- Fix is_deprecated if value is not available (default to False)
+
 # v0.4.2
 - Enabled support for context in list method
 - Enabled support for size in list_by_schema
