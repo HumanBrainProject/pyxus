@@ -15,14 +15,11 @@
 
 import fnmatch
 import json
-import logging
 import os
 import os.path
 
 from pyxus.utils.generic_data_upload_utils import GenericDataUploadUtils
 from pyxus.utils.schema_or_context_data import SchemaOrContextData
-
-LOGGER = logging.getLogger(__package__)
 
 
 def recursive_find_matching(root_path, pattern):
