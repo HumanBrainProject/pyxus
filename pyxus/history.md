@@ -1,5 +1,8 @@
 # Unreleased
 
+# v0.4.4
+- Improve/streamline logging
+
 # v0.4.3
 - Fix is_deprecated if value is not available (default to False)
 
