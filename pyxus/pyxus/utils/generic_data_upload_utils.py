@@ -24,13 +24,12 @@ from requests.exceptions import HTTPError
 from pyxus.client import NexusException
 from pyxus.resources.entity import Organization, Domain, Instance, Schema, Context, Entity
 
-LOGGER = logging.getLogger(__package__)
-
 
 class GenericDataUploadUtils(object):
     _client = None
 
     def __init__(self, nexus_client, upload_fully_qualified=True):
+        self.logger = logging.getLogger(__name__)
         self._client = nexus_client
         self._upload_fully_qualified = upload_fully_qualified
         self._id_cache = {}
@@ -80,7 +79,7 @@ class GenericDataUploadUtils(object):
             if existing_hashcode is None or existing_hashcode != current_hashcode:
                 result = self._client.instances.update(instance)
             else:
-                LOGGER.info("Skipping instance %s because it already exists", instance.path)
+                self.logger.debug("Skipping instance %s because it already exists", instance.path)
                 result = instance
             return result
         return None
@@ -96,7 +95,7 @@ class GenericDataUploadUtils(object):
 
     def resolve_identifier(self, match, fail_if_linked_instance_is_missing):
         if match in self._id_cache:
-            LOGGER.debug("resolved %s from cache", match)
+            self.logger.debug("resolved %s from cache", match)
             return self._id_cache.get(match)
         else:
             result_list = self._client.instances.list_by_full_subpath(match + "&deprecated=false")
@@ -109,7 +108,7 @@ class GenericDataUploadUtils(object):
                 if fail_if_linked_instance_is_missing:
                     raise ValueError("No entities found for " + match)
                 else:
-                    LOGGER.error("No entities found for %s", match)
+                    self.logger.warning("No entities found for %s", match)
                     return None
 
     def resolve_entities(self, template, fail_if_linked_instance_is_missing):

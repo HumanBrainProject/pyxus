@@ -19,8 +19,6 @@ import os
 from openid_http_client.http_client import HttpClient
 from pyxus.resources.repository import DomainRepository, OrganizationRepository, InstanceRepository, SchemaRepository, ContextRepository
 
-LOGGER = logging.getLogger(__package__)
-
 ENV_VAR_NEXUS_ENDPOINT = "NEXUS_ENDPOINT"
 ENV_VAR_NEXUS_PREFIX = "NEXUS_PREFIX"
 ENV_VAR_NEXUS_NAMESPACE = "NEXUS_NAMESPACE"
@@ -31,6 +29,7 @@ class NexusClient(object):
 
     def __init__(self, scheme=None, host=None, prefix=None, alternative_namespace=None, auth_client=None):
         self.version = None
+        self.logger = logging.getLogger(__name__)
         self.namespace = alternative_namespace if alternative_namespace is not None else "{}://{}".format(scheme, host)
         self.env = None
         self.config = NexusConfig(scheme, host, prefix, alternative_namespace)
@@ -50,10 +49,10 @@ class NexusClient(object):
             self.version = response.get('version')
             self.env = response.get('env')
             if service_name == 'kg' and self.version in supported_versions:
-                LOGGER.info('Version supported : %s\nenv: %s',
+                self.logger.debug('Version supported : %s\nenv: %s',
                             self.version, self.env)
                 return True
-            LOGGER.error('**Version unsupported**: %s\nenv: %s',
+            self.logger.error('**Version unsupported**: %s\nenv: %s',
                          self.version, self.env)
             return False
         raise NexusException(response.reason)

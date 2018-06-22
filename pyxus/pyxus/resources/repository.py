@@ -20,7 +20,6 @@ import codecs
 from abc import abstractmethod
 from pyxus.resources.entity import Context, Domain, Entity, Instance, Organization, SearchResult, SearchResultList, Schema
 
-LOGGER = logging.getLogger(__package__)
 
 if hasattr(str, "decode"):  # Python 2
     def decode_escapes(s):
@@ -33,18 +32,21 @@ else:                       # Python 3
 class Repository(object):
 
     def __init__(self, http_client, constructor):
+        self.logger = logging.getLogger(__name__)
         self.path = constructor.path
         self._http_client = http_client
         self.constructor = constructor
 
     def create(self, entity):
-        logging.debug("Creating entity: %s", entity)
+        self.logger.debug("Creating entity: %s", entity)
         result = self._http_client.put(entity.path, entity.data)
+        if result:
+            self.logger.info("%s created: %s", entity.__class__.__name__, entity.path)
         entity.data = result
         return entity
 
     def update(self, entity):
-        logging.debug("Updating entity: %s", entity)
+        self.logger.debug("Updating entity: %s", entity)
         revision = entity.get_revision()
         if revision is None:
             revision = self._get_last_revision(entity.id)
@@ -52,17 +54,19 @@ class Repository(object):
         result = self._http_client.put(path, entity.data)
         if result is not None:
             new_revision = result["nxv:rev"]
+            self.logger.info("%s updated: %s", entity.__class__.__name__, entity.path)
             entity.data = self._read(entity.id, new_revision)
         return entity
 
     def delete(self, entity, revision=None):
-        logging.debug("Deleting entity: %s", entity)
+        self.logger.debug("Deleting entity: %s", entity)
         if revision is None:
             revision = self._get_last_revision(entity.id)
         if not entity.is_deprecated():
             path = "{}?rev={}".format(entity.path, revision)
             result = self._http_client.delete(path)
             if result is not None:
+                self.logger.info("%s removed: %s", entity.__class__.__name__, entity.path)
                 new_revision = result["nxv:rev"]
                 entity.data = self._read(entity.id, new_revision)
         return entity
