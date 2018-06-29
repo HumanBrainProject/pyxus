@@ -40,7 +40,7 @@ class Repository(object):
     def create(self, entity):
         self.logger.debug("Creating entity: %s", entity)
         result = self._http_client.put(entity.path, entity.data)
-        if result:
+        if result is not None:
             self.logger.info("%s created: %s", entity.__class__.__name__, entity.path)
         entity.data = result
         return entity
@@ -249,6 +249,8 @@ class InstanceRepository(Repository):
         result = self._http_client.post(entity.path, entity.data)
         if result is None:
             raise ValueError("Entity was not created")
+        else:
+            self.logger.info("Instance created: %s", entity.__class__.__name__, entity.path)
         entity.data = result
         entity.id = Instance.extract_id_from_url(result.get("@id"), self.path)
         entity.build_path()
