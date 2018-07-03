@@ -24,6 +24,10 @@ from requests.exceptions import HTTPError
 from pyxus.client import NexusException
 from pyxus.resources.entity import Organization, Domain, Instance, Schema, Context, Entity
 
+class ResolveByIdentifierError(Exception):
+    def __init__(self, message, path):
+        super(ResolveByIdentifierError, self).__init__(message)
+        self.path=path
 
 class GenericDataUploadUtils(object):
     _client = None
@@ -93,7 +97,7 @@ class GenericDataUploadUtils(object):
             self._client.config.NEXUS_NAMESPACE,
             self._client.config.NEXUS_PREFIX), prefix=self._client.config.NEXUS_PREFIX)
 
-    def resolve_identifier(self, match, fail_if_linked_instance_is_missing):
+    def resolve_identifier(self, match):
         if match in self._id_cache:
             self.logger.debug("resolved %s from cache", match)
             return self._id_cache.get(match)
@@ -105,11 +109,7 @@ class GenericDataUploadUtils(object):
                 self._id_cache[match] = result
                 return result
             else:
-                if fail_if_linked_instance_is_missing:
-                    raise ValueError("No entities found for " + match)
-                else:
-                    self.logger.warning("No entities found for %s", match)
-                    return None
+                raise ResolveByIdentifierError("No entities found for {}".format(match), match)
 
     def resolve_entities(self, template, fail_if_linked_instance_is_missing):
         search_pattern = r"(?<=\"\{\{resolve_by_identifier) (?P<path>.*?) (?P<identifier>.*?)(?=\}\}\")"
@@ -124,12 +124,23 @@ class GenericDataUploadUtils(object):
 
         matches = re.findall(r"(?<=\{\{resolve ).*?\}(?=\}\})", template)
         for match in matches:
-            replacement = self.resolve_identifier(match, fail_if_linked_instance_is_missing)
-            template = template.replace("\"{{resolve " + match + "}}\"", "{{ \"@id\": \"{}\"}}".format(
-                replacement if replacement is not None else ""))
+            try:
+                replacement = self.resolve_identifier(match)
+            except ResolveByIdentifierError as e:
+                if not fail_if_linked_instance_is_missing:
+                    replacement = ""
+                else:
+                    raise e
+            template = template.replace("\"{{resolve " + match + "}}\"", "{{ \"@id\": \"{}\"}}".format(replacement if replacement is not None else ""))
         matches = re.findall(r"(?<=\{\{resolve_id ).*?\}(?=\}\})", template)
         for match in matches:
-            replacement = self.resolve_identifier(match, fail_if_linked_instance_is_missing)
+            try:
+                replacement = self.resolve_identifier(match)
+            except ResolveByIdentifierError as e:
+                if not fail_if_linked_instance_is_missing:
+                    replacement=""
+                else:
+                    raise e
             template = template.replace("{{resolve_id " + match + "}}", replacement if replacement is not None else "")
         return template
 
