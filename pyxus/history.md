@@ -1,5 +1,8 @@
 # Unreleased
 
+# v0.5.0
+- Dataupload utils raise a resolve by identifier error if the passed relation can not be resolved.
+
 # v0.4.4
 - Improve/streamline logging
 
