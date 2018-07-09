@@ -13,7 +13,6 @@
 #   limitations under the License.
 
 
-import hashlib
 import json
 import logging
 import re
@@ -59,7 +58,7 @@ class GenericDataUploadUtils(object):
             raw_json = final_json
         instance = Instance.create_new(schema_data.organization, schema_data.domain, schema_data.name, schema_data.version, raw_json)
         if hashcode_field not in fully_qualified_json:
-            current_hashcode = hashlib.md5(json.dumps(fully_qualified_json)).hexdigest()
+            current_hashcode = Entity.do_get_checksum(fully_qualified_json)
             fully_qualified_json[hashcode_field] = current_hashcode
             instance.data[hashcode_field] = current_hashcode
         else:

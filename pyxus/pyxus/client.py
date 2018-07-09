@@ -17,11 +17,9 @@ import logging
 import os
 
 from openid_http_client.http_client import HttpClient
-from pyxus.resources.repository import DomainRepository, OrganizationRepository, InstanceRepository, SchemaRepository, ContextRepository
 
-ENV_VAR_NEXUS_ENDPOINT = "NEXUS_ENDPOINT"
-ENV_VAR_NEXUS_PREFIX = "NEXUS_PREFIX"
-ENV_VAR_NEXUS_NAMESPACE = "NEXUS_NAMESPACE"
+from pyxus.resources.constants import ENV_VAR_NEXUS_ENDPOINT, ENV_VAR_NEXUS_PREFIX, ENV_VAR_NEXUS_NAMESPACE
+from pyxus.resources.repository import DomainRepository, OrganizationRepository, InstanceRepository, SchemaRepository, ContextRepository
 
 
 class NexusClient(object):
