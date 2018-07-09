@@ -1,5 +1,8 @@
 # Unreleased
 
+# v0.5.1
+- Allow the override of the hashcode namespace by environment variable (e.g. to allow the comparison between different stages)
+
 # v0.5.0
 - Dataupload utils raise a resolve by identifier error if the passed relation can not be resolved.
 

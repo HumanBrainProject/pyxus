@@ -13,12 +13,14 @@
 #   limitations under the License.
 
 
-
 import logging
+import os
 from unittest import TestCase
 
+from pyxus.resources.constants import ENV_VAR_HASHCODE_NAMESPACE, ENV_VAR_NEXUS_NAMESPACE
 from pyxus.resources.entity import Entity, Schema
 from pyxus.test import env_setup
+
 
 class TestEntity(TestCase):
 
@@ -66,3 +68,17 @@ class TestEntity(TestCase):
             'http://localhost:8080/vocab/hbp/core/celloptimization/contributors': 'Homer Simpson'}
 
         self.assertEqual(qualified_data, expected_data)
+
+    def test_do_get_checksum(self):
+        data1 = {
+            "foo": "bar"
+        }
+        os.environ[ENV_VAR_HASHCODE_NAMESPACE] = "bar"
+        os.environ[ENV_VAR_NEXUS_NAMESPACE] = "foo"
+        data2 = {
+            "bar": "bar"
+        }
+        checksum1 = Entity.do_get_checksum(data1)
+        checksum2 = Entity.do_get_checksum(data2)
+
+        self.assertEqual(checksum1, checksum2)

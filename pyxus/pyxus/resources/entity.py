@@ -15,9 +15,11 @@
 
 import hashlib
 import json
+import os
 import re
 from pyld import jsonld
 
+from pyxus.resources.constants import ENV_VAR_HASHCODE_NAMESPACE, ENV_VAR_NEXUS_NAMESPACE
 from pyxus.utils.turtle_schema_transformer import transform_turtle_to_jsonld_schema, transform_turtle_to_jsonld
 
 
@@ -43,7 +45,16 @@ class Entity(object):
         return json.dumps(self.data, indent=4)
 
     def get_checksum(self):
-        return hashlib.md5(json.dumps(self.data).encode("utf-8")).hexdigest()
+        return self.do_get_checksum(self.data)
+
+    @staticmethod
+    def do_get_checksum(json_data):
+        hashcode_base = os.getenv(ENV_VAR_HASHCODE_NAMESPACE)
+        nexus_base = os.getenv(ENV_VAR_NEXUS_NAMESPACE)
+        data = json.dumps(json_data).encode("utf-8")
+        if hashcode_base and nexus_base:
+            data = data.replace(nexus_base, hashcode_base)
+        return hashlib.md5(data).hexdigest()
 
     def get_simplified_data(self):
         return self._get_simplified_data(self.data)
