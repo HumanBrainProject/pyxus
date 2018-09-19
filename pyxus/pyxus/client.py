@@ -30,7 +30,7 @@ class NexusClient(object):
         self.logger = logging.getLogger(__name__)
         self.namespace = alternative_namespace if alternative_namespace is not None else "{}://{}".format(scheme, host)
         self.env = None
-        self.config = NexusConfig(scheme, host, prefix, alternative_namespace)
+        self.config = NexusConfig(scheme, host, prefix, self.namespace)
         self._http_client = HttpClient(self.config.NEXUS_ENDPOINT, self.config.NEXUS_PREFIX, auth_client=auth_client,
                                        alternative_endpoint_writing=self.config.NEXUS_NAMESPACE)
         self.domains = DomainRepository(self._http_client)
