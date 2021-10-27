@@ -24,7 +24,7 @@ import json
 import logging
 import re
 
-import pystache
+import jinja2
 from requests.exceptions import HTTPError
 
 from pyxus.client import NexusException
@@ -99,7 +99,7 @@ class GenericDataUploadUtils(object):
         # in our structure, the port is already included within the host string -
         # to make sure we don't have any broken namespaces, we have to remove it from the template
         template = template.replace(":{{port}}", "")
-        return pystache.render(template, base="{}/{}".format(
+        return jinja2.Template(template).render(base="{}/{}".format(
             self._client.config.NEXUS_NAMESPACE,
             self._client.config.NEXUS_PREFIX), prefix=self._client.config.NEXUS_PREFIX)
 

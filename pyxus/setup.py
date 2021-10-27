@@ -36,7 +36,7 @@ setup(
     name='pyxus',
     version='0.5.1',
     packages=['pyxus', 'pyxus.resources', 'pyxus.utils'],
-    install_requires = ['pyld', 'rdflib', 'pystache', 'openid_http_client', 'rdflib-jsonld'],
+    install_requires = ['pyld', 'rdflib', 'jinja2', 'openid_http_client', 'rdflib-jsonld'],
     author='HumanBrainProject',
     scripts=['manage.py'],
     author_email = 'platform@humanbrainproject.eu',
